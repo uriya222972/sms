@@ -1,7 +1,7 @@
 {
   "22uriya22@gmail.com": {
     "password": "222972uriya",
-    "sender": "MySenderName",
+    "sender": "AdminSender",
     "tabs": ["responses", "contacts", "groups", "calls", "send", "phoneSend", "settings", "manage"]
   }
 }
