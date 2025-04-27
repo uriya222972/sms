@@ -3,19 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <title>SMS Bot - מערכת ניהול</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Varela Round', Arial, sans-serif;
             background-color: #f0f4f8;
             padding: 30px;
             margin: 0;
         }
         nav {
             background-color: #3498db;
-            padding: 10px;
+            padding: 15px;
             color: white;
             text-align: center;
-            margin-bottom: 20px;
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 30px;
+            box-shadow: 0px 2px 8px rgba(0,0,0,0.2);
         }
         .container {
             display: flex;
@@ -27,8 +31,8 @@
         .section {
             background: #ffffff;
             padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0px 2px 6px rgba(0,0,0,0.1);
+            border-radius: 15px;
+            box-shadow: 0px 4px 10px rgba(0,0,0,0.1);
             width: 400px;
         }
         .response {
@@ -49,18 +53,45 @@
             padding: 5px 10px;
             border-radius: 5px;
             cursor: pointer;
+            transition: background 0.3s;
+        }
+        .response button:hover {
+            background: #c0392b;
         }
         input, button, select {
-            padding: 8px;
+            padding: 10px;
             margin: 5px 0;
             width: 100%;
             font-size: 16px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
         }
         button {
-            cursor: pointer;
+            background-color: #3498db;
+            color: white;
+            font-weight: bold;
+            border: none;
+            transition: background 0.3s;
+        }
+        button:hover {
+            background-color: #2980b9;
         }
         h2 {
             margin-top: 0;
+            color: #2c3e50;
+        }
+        .small-btn {
+            background-color: #2ecc71;
+            margin-top: 10px;
+        }
+        .small-btn:hover {
+            background-color: #27ae60;
+        }
+        .danger-btn {
+            background-color: #e67e22;
+        }
+        .danger-btn:hover {
+            background-color: #d35400;
         }
     </style>
 </head>
@@ -82,7 +113,9 @@
             <input type="text" id="reply">
         </label><br>
         <button onclick="save()">שמור תגובה</button>
-
+        <button onclick="clearAll()" class="danger-btn">נקה הכל</button>
+        <button onclick="exportToExcel()" class="small-btn">ייצוא לאקסל</button>
+        <input type="file" id="fileInput" accept=".xlsx" onchange="importFromExcel()" class="small-btn" style="background-color:#9b59b6;">
         <div id="responseList">
             <h3>תגובות קיימות:</h3>
         </div>
@@ -108,6 +141,7 @@ function save() {
     const reply = document.getElementById('reply').value.trim();
     if (incoming && reply) {
         responses.push({ incoming, reply });
+        updateStorage();
         load();
         document.getElementById('incoming').value = "";
         document.getElementById('reply').value = "";
@@ -127,6 +161,7 @@ function load() {
 
 function del(i) {
     responses.splice(i, 1);
+    updateStorage();
     load();
 }
 
@@ -137,7 +172,59 @@ function simulate() {
     document.getElementById('simulationResult').innerText = output;
 }
 
-load();
+function updateStorage() {
+    localStorage.setItem('responses', JSON.stringify(responses));
+}
+
+function loadStorage() {
+    const saved = localStorage.getItem('responses');
+    if (saved) {
+        responses = JSON.parse(saved);
+    }
+    load();
+}
+
+function clearAll() {
+    if (confirm("האם אתה בטוח שברצונך למחוק את כל התגובות?")) {
+        responses = [];
+        updateStorage();
+        load();
+    }
+}
+
+function exportToExcel() {
+    if (responses.length === 0) {
+        alert("אין תגובות לייצא!");
+        return;
+    }
+    const ws = XLSX.utils.json_to_sheet(responses);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "תגובות");
+    XLSX.writeFile(wb, "תגובות.xlsx");
+}
+
+function importFromExcel() {
+    const file = document.getElementById('fileInput').files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, { type: 'array' });
+        const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+        const imported = XLSX.utils.sheet_to_json(firstSheet);
+        imported.forEach(item => {
+            if (item.incoming && item.reply) {
+                responses.push({ incoming: item.incoming, reply: item.reply });
+            }
+        });
+        updateStorage();
+        load();
+        alert("ייבוא הצליח!");
+    };
+    reader.readAsArrayBuffer(file);
+}
+
+loadStorage();
 </script>
 
 </body>
