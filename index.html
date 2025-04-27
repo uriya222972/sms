@@ -1,0 +1,128 @@
+
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>SMS Bot - מערכת ניהול</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f4f8;
+            text-align: center;
+            padding: 30px;
+        }
+        nav {
+            background-color: #3498db;
+            padding: 10px;
+            color: white;
+            margin-bottom: 20px;
+        }
+        nav button {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 18px;
+            margin: 0 10px;
+            cursor: pointer;
+        }
+        .tab {
+            display: none;
+        }
+        .tab.active {
+            display: block;
+        }
+        .response {
+            background: #ffffff;
+            display: inline-block;
+            width: 70%;
+            margin: 10px 0;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0px 2px 6px rgba(0,0,0,0.1);
+            text-align: right;
+        }
+        .response button {
+            float: left;
+            background: #e74c3c;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        input, button, select {
+            padding: 8px;
+            margin: 5px 0;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+
+<nav>
+    <button onclick="openTab('responses')">תגובות</button>
+    <button onclick="openTab('simulate')">בדיקת הודעה</button>
+</nav>
+
+<div id="responses" class="tab active">
+    <h2>ניהול תגובות</h2>
+    <label>הודעה נכנסת: <input type="text" id="incoming"></label><br>
+    <label>תגובה: <input type="text" id="reply"></label><br>
+    <button onclick="save()">שמור תגובה</button>
+    <div id="responseList"><h3>תגובות קיימות:</h3></div>
+</div>
+
+<div id="simulate" class="tab">
+    <h2>בדיקת הודעה</h2>
+    <label>הודעה לבדיקה: <input type="text" id="testIncoming"></label><br>
+    <button onclick="simulate()">בדוק</button>
+    <p id="simulationResult"></p>
+</div>
+
+<script>
+let responses = [];
+
+function openTab(tabId) {
+    document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+    document.getElementById(tabId).classList.add('active');
+}
+
+function save() {
+    const incoming = document.getElementById('incoming').value.trim();
+    const reply = document.getElementById('reply').value.trim();
+    if (incoming && reply) {
+        responses.push({ incoming, reply });
+        load();
+        document.getElementById('incoming').value = "";
+        document.getElementById('reply').value = "";
+    }
+}
+
+function load() {
+    const div = document.getElementById('responseList');
+    div.innerHTML = '<h3>תגובות קיימות:</h3>';
+    responses.forEach((r, i) => {
+        const el = document.createElement('div');
+        el.className = 'response';
+        el.innerHTML = `"${r.incoming}" → "${r.reply}" <button onclick="del(${i})">מחק</button>`;
+        div.appendChild(el);
+    });
+}
+
+function del(i) {
+    responses.splice(i, 1);
+    load();
+}
+
+function simulate() {
+    const testIncoming = document.getElementById('testIncoming').value.trim();
+    const found = responses.find(r => r.incoming === testIncoming);
+    const output = found ? found.reply : "אין תגובה מתאימה.";
+    document.getElementById('simulationResult').innerText = output;
+}
+
+load();
+</script>
+
+</body>
+</html>
