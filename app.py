@@ -1,62 +1,93 @@
 from flask import Flask, request, jsonify
-import requests
 import os
+import json
 
 app = Flask(__name__)
 
-# responses
-responses = [
-    {"incoming": "שלום", "reply": "שלום וברכה!"},
-    {"incoming": "מה נשמע", "reply": "הכל מצוין, תודה!"}
-]
+# קבצי JSON
+RESPONSES_FILE = 'responses.json'
+CONTACTS_FILE = 'contacts.json'
+SETTINGS_FILE = 'settings.json'
 
-# פרטי Inforu מהסביבה
-INFORU_USER = os.environ.get('INFORU_USER')
-INFORU_PASS = os.environ.get('INFORU_PASS')
-SENDER = os.environ.get('SENDER')
+# פונקציות עזר
 
-def send_sms(phone, message):
-    url = "https://uapi.inforu.co.il/SendMessageXml.ashx"
-    xml = f"""
-    <Inforu>
-      <User>
-        <Username>{INFORU_USER}</Username>
-        <Password>{INFORU_PASS}</Password>
-      </User>
-      <Content Type="sms">
-        <Message>{message}</Message>
-      </Content>
-      <Recipients>
-        <PhoneNumber>{phone}</PhoneNumber>
-      </Recipients>
-      <Settings>
-        <Sender>{SENDER}</Sender>
-      </Settings>
-    </Inforu>
-    """
-    headers = {"Content-Type": "text/xml"}
-    response = requests.post(url, data=xml.encode('utf-8'), headers=headers)
-    return response.text
+def load_json(file_path, default_data):
+    if not os.path.exists(file_path):
+        with open(file_path, 'w', encoding='utf-8') as f:
+            json.dump(default_data, f, ensure_ascii=False, indent=2)
+    with open(file_path, 'r', encoding='utf-8') as f:
+        return json.load(f)
+
+def save_json(file_path, data):
+    with open(file_path, 'w', encoding='utf-8') as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
+
+# טעינת מידע בהתחלה
+responses = load_json(RESPONSES_FILE, [])
+contacts = load_json(CONTACTS_FILE, [])
+settings = load_json(SETTINGS_FILE, {"INFORU_USER": "", "INFORU_PASS": "", "SENDER": ""})
+
+# ראוטים עיקריים
 
 @app.route('/')
 def home():
-    return "SMS Bot is Running!"
+    return "SMS Bot API is Running!"
 
-@app.route('/inbound_sms', methods=['POST'])
-def inbound_sms():
-    data = request.form
-    incoming_text = data.get('Message')
-    phone_number = data.get('Phone')
+# תגובות
+@app.route('/responses', methods=['GET'])
+def get_responses():
+    return jsonify(responses)
 
-    if incoming_text and phone_number:
-        matched = next((r['reply'] for r in responses if r['incoming'] == incoming_text), None)
-        if matched:
-            send_sms(phone_number, matched)
-            return jsonify({"status": "replied", "reply": matched})
-        else:
-            return jsonify({"status": "no match"})
-    else:
-        return jsonify({"status": "invalid request"}), 400
+@app.route('/responses', methods=['POST'])
+def add_response():
+    data = request.get_json()
+    responses.append({"incoming": data['incoming'], "reply": data['reply']})
+    save_json(RESPONSES_FILE, responses)
+    return jsonify({"status": "response added"})
+
+@app.route('/responses/<int:index>', methods=['DELETE'])
+def delete_response(index):
+    if 0 <= index < len(responses):
+        responses.pop(index)
+        save_json(RESPONSES_FILE, responses)
+        return jsonify({"status": "response deleted"})
+    return jsonify({"status": "invalid index"}), 400
+
+# אנשי קשר
+@app.route('/contacts', methods=['GET'])
+def get_contacts():
+    return jsonify(contacts)
+
+@app.route('/contacts', methods=['POST'])
+def add_contact():
+    data = request.get_json()
+    contacts.append({"name": data['name'], "phone": data['phone']})
+    save_json(CONTACTS_FILE, contacts)
+    return jsonify({"status": "contact added"})
+
+@app.route('/contacts/<int:index>', methods=['DELETE'])
+def delete_contact(index):
+    if 0 <= index < len(contacts):
+        contacts.pop(index)
+        save_json(CONTACTS_FILE, contacts)
+        return jsonify({"status": "contact deleted"})
+    return jsonify({"status": "invalid index"}), 400
+
+# הגדרות Inforu
+@app.route('/settings', methods=['GET'])
+def get_settings():
+    return jsonify(settings)
+
+@app.route('/settings', methods=['POST'])
+def update_settings():
+    data = request.get_json()
+    settings.update({
+        "INFORU_USER": data['INFORU_USER'],
+        "INFORU_PASS": data['INFORU_PASS'],
+        "SENDER": data['SENDER']
+    })
+    save_json(SETTINGS_FILE, settings)
+    return jsonify({"status": "settings updated"})
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=3000)
+    app.run(host='0.0.0.0', port=3000, debug=True)
