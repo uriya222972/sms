@@ -3,193 +3,160 @@
 <head>
     <meta charset="UTF-8">
     <title>SMS Bot - מערכת ניהול</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f0f4f8;
-            text-align: center;
-            padding: 30px;
-        }
-        nav {
-            background-color: #3498db;
-            padding: 10px;
-            color: white;
-            margin-bottom: 20px;
-        }
-        nav button {
-            background: none;
-            border: none;
-            color: white;
-            font-size: 18px;
-            margin: 0 10px;
-            cursor: pointer;
-        }
-        .tab {
-            display: none;
-        }
-        .tab.active {
-            display: block;
-        }
-        .response, .contact, .call {
-            background: #ffffff;
-            display: inline-block;
-            width: 70%;
-            margin: 10px 0;
-            padding: 15px;
-            border-radius: 10px;
-            box-shadow: 0px 2px 6px rgba(0,0,0,0.1);
-            text-align: right;
-        }
-        .response { border-right: 5px solid #f39c12; } /* כתום */
-        .contact { border-right: 5px solid #2ecc71; }  /* ירוק */
-        .call { border-right: 5px solid #3498db; }     /* תכלת */
-        .response button, .contact button, .call button {
-            float: left;
-            background: #e74c3c;
-            color: white;
-            border: none;
-            padding: 5px 10px;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-        input, button, select {
-            padding: 8px;
-            margin: 5px 0;
-            font-size: 16px;
-        }
-        #balance {
-            font-size: 20px;
-            margin-bottom: 15px;
-            color: #2c3e50;
-        }
+        body { font-family: Arial, sans-serif; background-color: #f0f4f8; padding: 30px; margin: 0; }
+        nav { background-color: #3498db; padding: 15px; color: white; text-align: center; font-size: 24px; font-weight: bold; margin-bottom: 30px; }
+        .container { display: flex; gap: 30px; justify-content: center; align-items: flex-start; flex-wrap: wrap; }
+        .section { background: #ffffff; padding: 20px; border-radius: 15px; box-shadow: 0px 4px 10px rgba(0,0,0,0.1); width: 400px; }
+        input, button, select { padding: 10px; margin: 5px 0; width: 100%; font-size: 16px; border-radius: 8px; border: 1px solid #ccc; }
+        button { background-color: #3498db; color: white; font-weight: bold; border: none; cursor: pointer; transition: background 0.3s; }
+        button:hover { background-color: #2980b9; }
+        .response, .contact { background: #eef6fc; margin: 10px 0; padding: 10px; border-radius: 8px; text-align: right; position: relative; }
+        .response button, .contact button { position: absolute; left: 10px; top: 10px; background: #e74c3c; }
+        h2 { margin-top: 0; color: #2c3e50; }
     </style>
 </head>
 <body>
 
-<div id="balance">בודק את יתרת ההודעות...</div>
+<nav>SMS Bot - ניהול</nav>
 
-<nav>
-    <button onclick="openTab('responses')">תגובות</button>
-    <button onclick="openTab('contacts')">אנשי קשר</button>
-    <button onclick="openTab('calls')">טלפנייה</button>
-</nav>
+<div class="container">
 
-<div id="responses" class="tab active">
-    <h2>ניהול תגובות</h2>
-    <label>הודעה נכנסת: <input type="text" id="incoming"></label><br>
-    <label>תגובה: <input type="text" id="reply"></label><br>
-    <button onclick="saveResponse()">שמור תגובה</button>
-    <div id="responseList"><h3>תגובות קיימות:</h3></div>
-    <br><br>
-    <h3>בדיקת הודעה:</h3>
-    <label>הודעה לבדיקה: <input type="text" id="testIncoming"></label><br>
-    <button onclick="simulate()">בדוק</button>
-    <p id="simulationResult"></p>
-</div>
+    <div class="section">
+        <h2>תגובות</h2>
+        <input type="text" id="incoming" placeholder="הודעה נכנסת">
+        <input type="text" id="reply" placeholder="תגובה">
+        <button onclick="saveResponse()">שמור תגובה</button>
+        <div id="responseList"></div>
+    </div>
 
-<div id="contacts" class="tab">
-    <h2>אנשי קשר</h2>
-    <label>שם: <input type="text" id="contactName"></label><br>
-    <label>מספר טלפון: <input type="text" id="contactPhone"></label><br>
-    <button onclick="saveContact()">שמור איש קשר</button>
-    <div id="contactList"><h3>אנשי קשר קיימים:</h3></div>
-</div>
+    <div class="section">
+        <h2>אנשי קשר</h2>
+        <input type="text" id="contactName" placeholder="שם">
+        <input type="text" id="contactPhone" placeholder="מספר טלפון">
+        <button onclick="saveContact()">שמור איש קשר</button>
+        <input type="file" id="importFile" accept=".xlsx" onchange="importContacts()">
+        <div id="contactList"></div>
+    </div>
 
-<div id="calls" class="tab">
-    <h2>טלפנייה</h2>
-    <div id="callTarget"><h3>אין אנשי קשר לקרוא</h3></div>
-    <button onclick="nextCall()">הבא בטלפנייה</button>
+    <div class="section">
+        <h2>הגדרות חיבור</h2>
+        <input type="text" id="user" placeholder="שם משתמש">
+        <input type="password" id="pass" placeholder="סיסמה">
+        <input type="text" id="sender" placeholder="שם שולח">
+        <button onclick="saveSettings()">שמור הגדרות</button>
+    </div>
+
 </div>
 
 <script>
-let responses = [];
-let contacts = [];
-let currentCallIndex = 0;
-
-function openTab(tabId) {
-    document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
-    document.getElementById(tabId).classList.add('active');
+async function loadResponses() {
+    const res = await fetch('/responses');
+    const data = await res.json();
+    const list = document.getElementById('responseList');
+    list.innerHTML = '';
+    data.forEach((r, i) => {
+        const div = document.createElement('div');
+        div.className = 'response';
+        div.innerHTML = `${r.incoming} → ${r.reply} <button onclick="deleteResponse(${i})">מחק</button>`;
+        list.appendChild(div);
+    });
 }
 
-function saveResponse() {
+async function saveResponse() {
     const incoming = document.getElementById('incoming').value.trim();
     const reply = document.getElementById('reply').value.trim();
     if (incoming && reply) {
-        responses.push({ incoming, reply });
+        await fetch('/responses', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ incoming, reply }) });
+        document.getElementById('incoming').value = '';
+        document.getElementById('reply').value = '';
         loadResponses();
-        document.getElementById('incoming').value = "";
-        document.getElementById('reply').value = "";
     }
 }
 
-function loadResponses() {
-    const div = document.getElementById('responseList');
-    div.innerHTML = '<h3>תגובות קיימות:</h3>';
-    responses.forEach((r, i) => {
-        const el = document.createElement('div');
-        el.className = 'response';
-        el.innerHTML = `"${r.incoming}" → "${r.reply}" <button onclick="delResponse(${i})">מחק</button>`;
-        div.appendChild(el);
-    });
-}
-
-function delResponse(i) {
-    responses.splice(i, 1);
+async function deleteResponse(index) {
+    await fetch(`/responses/${index}`, { method: 'DELETE' });
     loadResponses();
 }
 
-function simulate() {
-    const testIncoming = document.getElementById('testIncoming').value.trim();
-    const found = responses.find(r => r.incoming === testIncoming);
-    const output = found ? found.reply : "אין תגובה מתאימה.";
-    document.getElementById('simulationResult').innerText = output;
-}
-
-function saveContact() {
-    const name = document.getElementById('contactName').value.trim();
-    const phone = document.getElementById('contactPhone').value.trim();
-    if (name && phone) {
-        contacts.push({ name, phone });
-        loadContacts();
-        document.getElementById('contactName').value = "";
-        document.getElementById('contactPhone').value = "";
-    }
-}
-
-function loadContacts() {
-    const div = document.getElementById('contactList');
-    div.innerHTML = '<h3>אנשי קשר קיימים:</h3>';
-    contacts.forEach((c, i) => {
-        const el = document.createElement('div');
-        el.className = 'contact';
-        el.innerHTML = `${c.name} - ${c.phone} <button onclick="delContact(${i})">מחק</button>`;
-        div.appendChild(el);
+async function loadContacts() {
+    const res = await fetch('/contacts');
+    const data = await res.json();
+    const list = document.getElementById('contactList');
+    list.innerHTML = '';
+    data.forEach((c, i) => {
+        const div = document.createElement('div');
+        div.className = 'contact';
+        div.innerHTML = `${c.name} - ${c.phone} <button onclick="deleteContact(${i})">מחק</button>`;
+        list.appendChild(div);
     });
 }
 
-function delContact(i) {
-    contacts.splice(i, 1);
+async function saveContact() {
+    const name = document.getElementById('contactName').value.trim();
+    const phone = document.getElementById('contactPhone').value.trim();
+    if (name && phone) {
+        await fetch('/contacts', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, phone }) });
+        document.getElementById('contactName').value = '';
+        document.getElementById('contactPhone').value = '';
+        loadContacts();
+    }
+}
+
+async function deleteContact(index) {
+    await fetch(`/contacts/${index}`, { method: 'DELETE' });
     loadContacts();
 }
 
-function nextCall() {
-    if (contacts.length === 0) {
-        document.getElementById('callTarget').innerHTML = '<h3>אין אנשי קשר לקרוא</h3>';
-        return;
-    }
-    if (currentCallIndex >= contacts.length) {
-        currentCallIndex = 0;
-    }
-    const c = contacts[currentCallIndex];
-    document.getElementById('callTarget').innerHTML = `<div class="call">${c.name} - ${c.phone}</div>`;
-    currentCallIndex++;
+async function loadSettings() {
+    const res = await fetch('/settings');
+    const data = await res.json();
+    document.getElementById('user').value = data.INFORU_USER;
+    document.getElementById('pass').value = data.INFORU_PASS;
+    document.getElementById('sender').value = data.SENDER;
 }
 
-// הדמיה להודעת כמות הודעות זמינות
-document.getElementById('balance').innerText = "נותרו לך: 254 הודעות זמינות"; 
+async function saveSettings() {
+    const user = document.getElementById('user').value.trim();
+    const pass = document.getElementById('pass').value.trim();
+    const sender = document.getElementById('sender').value.trim();
+    if (user && pass && sender) {
+        await fetch('/settings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ INFORU_USER: user, INFORU_PASS: pass, SENDER: sender }) });
+        alert('הגדרות נשמרו בהצלחה!');
+    }
+}
 
-loadResponses();
-loadContacts();
+async function importContacts() {
+    const file = document.getElementById('importFile').files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, { type: 'array' });
+        const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+        const imported = XLSX.utils.sheet_to_json(firstSheet);
+        for (const item of imported) {
+            if (item.name && item.phone) {
+                await fetch('/contacts', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: item.name, phone: item.phone }) });
+            }
+        }
+        loadContacts();
+        alert('ייבוא הצליח!');
+    };
+    reader.readAsArrayBuffer(file);
+}
+
+document.getElementById('incoming').addEventListener('keypress', (e) => { if (e.key === 'Enter') saveResponse(); });
+document.getElementById('reply').addEventListener('keypress', (e) => { if (e.key === 'Enter') saveResponse(); });
+document.getElementById('contactName').addEventListener('keypress', (e) => { if (e.key === 'Enter') saveContact(); });
+document.getElementById('contactPhone').addEventListener('keypress', (e) => { if (e.key === 'Enter') saveContact(); });
+
+document.addEventListener('DOMContentLoaded', () => {
+    loadResponses();
+    loadContacts();
+    loadSettings();
+});
 </script>
 
 </body>
