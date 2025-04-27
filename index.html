@@ -3,166 +3,139 @@
 <head>
     <meta charset="UTF-8">
     <title>SMS Bot - מערכת ניהול</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         body {
-            font-family: 'Varela Round', Arial, sans-serif;
+            font-family: Arial, sans-serif;
             background-color: #f0f4f8;
+            text-align: center;
             padding: 30px;
-            margin: 0;
         }
         nav {
             background-color: #3498db;
-            padding: 15px;
-            color: white;
-            text-align: center;
-            font-size: 24px;
-            font-weight: bold;
-            margin-bottom: 30px;
-            box-shadow: 0px 2px 8px rgba(0,0,0,0.2);
-        }
-        .container {
-            display: flex;
-            gap: 30px;
-            justify-content: center;
-            align-items: flex-start;
-            flex-wrap: wrap;
-        }
-        .section {
-            background: #ffffff;
-            padding: 20px;
-            border-radius: 15px;
-            box-shadow: 0px 4px 10px rgba(0,0,0,0.1);
-            width: 400px;
-        }
-        .response {
-            background: #eef6fc;
-            margin: 10px 0;
             padding: 10px;
-            border-radius: 8px;
-            text-align: right;
-            position: relative;
+            color: white;
+            margin-bottom: 20px;
         }
-        .response button {
-            position: absolute;
-            left: 10px;
-            top: 10px;
+        nav button {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 18px;
+            margin: 0 10px;
+            cursor: pointer;
+        }
+        .tab {
+            display: none;
+        }
+        .tab.active {
+            display: block;
+        }
+        .response, .contact, .call {
+            background: #ffffff;
+            display: inline-block;
+            width: 70%;
+            margin: 10px 0;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0px 2px 6px rgba(0,0,0,0.1);
+            text-align: right;
+        }
+        .response { border-right: 5px solid #f39c12; } /* כתום */
+        .contact { border-right: 5px solid #2ecc71; }  /* ירוק */
+        .call { border-right: 5px solid #3498db; }     /* תכלת */
+        .response button, .contact button, .call button {
+            float: left;
             background: #e74c3c;
             color: white;
             border: none;
             padding: 5px 10px;
             border-radius: 5px;
             cursor: pointer;
-            transition: background 0.3s;
-        }
-        .response button:hover {
-            background: #c0392b;
         }
         input, button, select {
-            padding: 10px;
+            padding: 8px;
             margin: 5px 0;
-            width: 100%;
             font-size: 16px;
-            border-radius: 8px;
-            border: 1px solid #ccc;
         }
-        button {
-            background-color: #3498db;
-            color: white;
-            font-weight: bold;
-            border: none;
-            transition: background 0.3s;
-        }
-        button:hover {
-            background-color: #2980b9;
-        }
-        h2 {
-            margin-top: 0;
+        #balance {
+            font-size: 20px;
+            margin-bottom: 15px;
             color: #2c3e50;
-        }
-        .small-btn {
-            background-color: #2ecc71;
-            margin-top: 10px;
-        }
-        .small-btn:hover {
-            background-color: #27ae60;
-        }
-        .danger-btn {
-            background-color: #e67e22;
-        }
-        .danger-btn:hover {
-            background-color: #d35400;
         }
     </style>
 </head>
 <body>
 
+<div id="balance">בודק את יתרת ההודעות...</div>
+
 <nav>
-    מערכת ניהול SMS Bot
+    <button onclick="openTab('responses')">תגובות</button>
+    <button onclick="openTab('contacts')">אנשי קשר</button>
+    <button onclick="openTab('calls')">טלפנייה</button>
 </nav>
 
-<div class="container">
+<div id="responses" class="tab active">
+    <h2>ניהול תגובות</h2>
+    <label>הודעה נכנסת: <input type="text" id="incoming"></label><br>
+    <label>תגובה: <input type="text" id="reply"></label><br>
+    <button onclick="saveResponse()">שמור תגובה</button>
+    <div id="responseList"><h3>תגובות קיימות:</h3></div>
+    <br><br>
+    <h3>בדיקת הודעה:</h3>
+    <label>הודעה לבדיקה: <input type="text" id="testIncoming"></label><br>
+    <button onclick="simulate()">בדוק</button>
+    <p id="simulationResult"></p>
+</div>
 
-    <!-- אזור ניהול תגובות -->
-    <div class="section">
-        <h2>ניהול תגובות</h2>
-        <label>הודעה נכנסת:<br>
-            <input type="text" id="incoming">
-        </label><br>
-        <label>תגובה:<br>
-            <input type="text" id="reply">
-        </label><br>
-        <button onclick="save()">שמור תגובה</button>
-        <button onclick="clearAll()" class="danger-btn">נקה הכל</button>
-        <button onclick="exportToExcel()" class="small-btn">ייצוא לאקסל</button>
-        <input type="file" id="fileInput" accept=".xlsx" onchange="importFromExcel()" class="small-btn" style="background-color:#9b59b6;">
-        <div id="responseList">
-            <h3>תגובות קיימות:</h3>
-        </div>
-    </div>
+<div id="contacts" class="tab">
+    <h2>אנשי קשר</h2>
+    <label>שם: <input type="text" id="contactName"></label><br>
+    <label>מספר טלפון: <input type="text" id="contactPhone"></label><br>
+    <button onclick="saveContact()">שמור איש קשר</button>
+    <div id="contactList"><h3>אנשי קשר קיימים:</h3></div>
+</div>
 
-    <!-- אזור בדיקת הודעות -->
-    <div class="section">
-        <h2>בדיקת הודעה</h2>
-        <label>הודעה לבדיקה:<br>
-            <input type="text" id="testIncoming">
-        </label><br>
-        <button onclick="simulate()">בדוק תגובה</button>
-        <p id="simulationResult" style="margin-top: 20px; font-weight: bold;"></p>
-    </div>
-
+<div id="calls" class="tab">
+    <h2>טלפנייה</h2>
+    <div id="callTarget"><h3>אין אנשי קשר לקרוא</h3></div>
+    <button onclick="nextCall()">הבא בטלפנייה</button>
 </div>
 
 <script>
 let responses = [];
+let contacts = [];
+let currentCallIndex = 0;
 
-function save() {
+function openTab(tabId) {
+    document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+    document.getElementById(tabId).classList.add('active');
+}
+
+function saveResponse() {
     const incoming = document.getElementById('incoming').value.trim();
     const reply = document.getElementById('reply').value.trim();
     if (incoming && reply) {
         responses.push({ incoming, reply });
-        updateStorage();
-        load();
+        loadResponses();
         document.getElementById('incoming').value = "";
         document.getElementById('reply').value = "";
     }
 }
 
-function load() {
+function loadResponses() {
     const div = document.getElementById('responseList');
     div.innerHTML = '<h3>תגובות קיימות:</h3>';
     responses.forEach((r, i) => {
         const el = document.createElement('div');
         el.className = 'response';
-        el.innerHTML = `"${r.incoming}" → "${r.reply}" <button onclick="del(${i})">מחק</button>`;
+        el.innerHTML = `"${r.incoming}" → "${r.reply}" <button onclick="delResponse(${i})">מחק</button>`;
         div.appendChild(el);
     });
 }
 
-function del(i) {
+function delResponse(i) {
     responses.splice(i, 1);
-    updateStorage();
-    load();
+    loadResponses();
 }
 
 function simulate() {
@@ -172,59 +145,51 @@ function simulate() {
     document.getElementById('simulationResult').innerText = output;
 }
 
-function updateStorage() {
-    localStorage.setItem('responses', JSON.stringify(responses));
-}
-
-function loadStorage() {
-    const saved = localStorage.getItem('responses');
-    if (saved) {
-        responses = JSON.parse(saved);
-    }
-    load();
-}
-
-function clearAll() {
-    if (confirm("האם אתה בטוח שברצונך למחוק את כל התגובות?")) {
-        responses = [];
-        updateStorage();
-        load();
+function saveContact() {
+    const name = document.getElementById('contactName').value.trim();
+    const phone = document.getElementById('contactPhone').value.trim();
+    if (name && phone) {
+        contacts.push({ name, phone });
+        loadContacts();
+        document.getElementById('contactName').value = "";
+        document.getElementById('contactPhone').value = "";
     }
 }
 
-function exportToExcel() {
-    if (responses.length === 0) {
-        alert("אין תגובות לייצא!");
+function loadContacts() {
+    const div = document.getElementById('contactList');
+    div.innerHTML = '<h3>אנשי קשר קיימים:</h3>';
+    contacts.forEach((c, i) => {
+        const el = document.createElement('div');
+        el.className = 'contact';
+        el.innerHTML = `${c.name} - ${c.phone} <button onclick="delContact(${i})">מחק</button>`;
+        div.appendChild(el);
+    });
+}
+
+function delContact(i) {
+    contacts.splice(i, 1);
+    loadContacts();
+}
+
+function nextCall() {
+    if (contacts.length === 0) {
+        document.getElementById('callTarget').innerHTML = '<h3>אין אנשי קשר לקרוא</h3>';
         return;
     }
-    const ws = XLSX.utils.json_to_sheet(responses);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "תגובות");
-    XLSX.writeFile(wb, "תגובות.xlsx");
+    if (currentCallIndex >= contacts.length) {
+        currentCallIndex = 0;
+    }
+    const c = contacts[currentCallIndex];
+    document.getElementById('callTarget').innerHTML = `<div class="call">${c.name} - ${c.phone}</div>`;
+    currentCallIndex++;
 }
 
-function importFromExcel() {
-    const file = document.getElementById('fileInput').files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        const data = new Uint8Array(e.target.result);
-        const workbook = XLSX.read(data, { type: 'array' });
-        const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-        const imported = XLSX.utils.sheet_to_json(firstSheet);
-        imported.forEach(item => {
-            if (item.incoming && item.reply) {
-                responses.push({ incoming: item.incoming, reply: item.reply });
-            }
-        });
-        updateStorage();
-        load();
-        alert("ייבוא הצליח!");
-    };
-    reader.readAsArrayBuffer(file);
-}
+// הדמיה להודעת כמות הודעות זמינות
+document.getElementById('balance').innerText = "נותרו לך: 254 הודעות זמינות"; 
 
-loadStorage();
+loadResponses();
+loadContacts();
 </script>
 
 </body>
