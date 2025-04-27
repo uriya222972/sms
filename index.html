@@ -7,49 +7,61 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            background-color: #f0f4f8;
+            background-color: #f4f6f8;
             margin: 0;
+            padding: 0;
         }
         nav {
             background-color: #3498db;
-            padding: 10px;
+            padding: 15px;
             color: white;
             text-align: center;
-            font-size: 24px;
+            font-size: 26px;
+            font-weight: bold;
         }
         .tabs {
             display: flex;
-            background: #ecf0f1;
+            background-color: #ecf0f1;
             justify-content: center;
-            gap: 10px;
             padding: 10px;
+            gap: 10px;
+            flex-wrap: wrap;
         }
         .tabs button {
             background: none;
             border: none;
             padding: 10px 20px;
             cursor: pointer;
-            font-size: 16px;
+            font-size: 18px;
+            color: #34495e;
             border-bottom: 2px solid transparent;
+            transition: 0.3s;
         }
         .tabs button.active {
             border-bottom: 3px solid #3498db;
+            color: #3498db;
             font-weight: bold;
         }
         .tabContent {
             display: none;
-            padding: 20px;
+            padding: 30px;
+            background: white;
+            margin: 20px auto;
+            border-radius: 10px;
+            max-width: 1100px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
         }
         .tabContent.active {
             display: block;
         }
         input, button, select {
-            padding: 8px;
+            padding: 10px;
             margin: 5px 0;
-            width: 100%;
             font-size: 16px;
             border-radius: 8px;
             border: 1px solid #ccc;
+            width: 100%;
+            box-sizing: border-box;
         }
         button {
             background-color: #3498db;
@@ -64,11 +76,11 @@
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 10px;
+            margin-top: 20px;
         }
         th, td {
             border: 1px solid #ddd;
-            padding: 8px;
+            padding: 10px;
             text-align: right;
         }
         th {
@@ -79,15 +91,25 @@
             background-color: #f9f9f9;
         }
         tr:hover {
-            background-color: #f1f1f1;
+            background-color: #eef;
+        }
+        #loginForm {
+            max-width: 400px;
+            margin: 80px auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 4px 12px rgba(0,0,0,0.1);
+            text-align: center;
         }
     </style>
 </head>
+
 <body>
 
-<nav>SMS Bot - התחברות</nav>
+<nav>SMS Bot - מערכת ניהול</nav>
 
-<div id="loginForm" style="max-width:400px;margin:50px auto;text-align:center;">
+<div id="loginForm">
     <h2>כניסה למערכת</h2>
     <input type="text" id="loginUser" placeholder="שם משתמש">
     <input type="password" id="loginPass" placeholder="סיסמה">
@@ -96,21 +118,25 @@
 </div>
 
 <div id="mainApp" style="display:none;">
-    <div class="tabs" id="tabsArea"></div>
+    <div class="tabs" id="tabsArea">
+        <!-- הכפתורים ללשוניות יכנסו פה דינמית -->
+    </div>
 
-    <div id="responsesTab" class="tabContent">...</div>
-    <div id="contactsTab" class="tabContent">...</div>
-    <div id="callsTab" class="tabContent">...</div>
-    <div id="settingsTab" class="tabContent">...</div>
-    <div id="manageTab" class="tabContent">...</div>
+    <div id="responsesTab" class="tabContent"></div>
+    <div id="contactsTab" class="tabContent"></div>
+    <div id="groupsTab" class="tabContent"></div>
+    <div id="callsTab" class="tabContent"></div>
+    <div id="sendTab" class="tabContent"></div>
+    <div id="phoneSendTab" class="tabContent"></div>
+    <div id="settingsTab" class="tabContent"></div>
+    <div id="manageTab" class="tabContent"></div>
 </div>
-<!-- תוכן לשונית תגובות -->
+<!-- לשונית תגובות -->
 <div id="responsesTab" class="tabContent">
-    <h2>תגובות</h2>
+    <h2>ניהול תגובות</h2>
     <input type="text" id="incoming" placeholder="הודעה נכנסת">
     <input type="text" id="reply" placeholder="תגובה">
     <button onclick="saveResponse()">שמור תגובה</button>
-    <br><br>
     <h3>בדיקת הודעה:</h3>
     <input type="text" id="testIncoming" placeholder="הודעה לבדיקה">
     <button onclick="simulate()">בדוק</button>
@@ -127,14 +153,13 @@
     </table>
 </div>
 
-<!-- תוכן לשונית אנשי קשר -->
+<!-- לשונית אנשי קשר -->
 <div id="contactsTab" class="tabContent">
     <h2>אנשי קשר</h2>
     <input type="text" id="contactName" placeholder="שם">
     <input type="text" id="contactPhone" placeholder="טלפון">
     <button onclick="saveContact()">שמור איש קשר</button>
-    <br><br>
-    <label>העלה קובץ Excel או CSV (עמודות: "שם", "טלפון"):</label><br>
+    <h3>ייבוא אנשי קשר (Excel/CSV)</h3>
     <input type="file" id="importContactsFile" onchange="importContacts()">
     <button onclick="downloadContactsExample()">הורד קובץ דוגמה</button>
     <table id="contactsTable">
@@ -149,48 +174,84 @@
     </table>
 </div>
 
-<!-- תוכן לשונית טלפנייה -->
+<!-- לשונית קבוצות -->
+<div id="groupsTab" class="tabContent">
+    <h2>ניהול קבוצות</h2>
+    <input type="text" id="groupName" placeholder="שם קבוצה חדשה">
+    <button onclick="saveGroup()">צור קבוצה</button>
+    <h3>ייבוא קבוצות (Excel/CSV)</h3>
+    <input type="file" id="importGroupsFile" onchange="importGroups()">
+    <button onclick="downloadGroupsExample()">הורד קובץ דוגמה</button>
+    <div id="groupsList"></div>
+</div>
+
+<!-- לשונית טלפנייה -->
 <div id="callsTab" class="tabContent">
     <h2>טלפנייה</h2>
     <div id="callTarget"><h3>אין אנשי קשר לקרוא</h3></div>
     <button onclick="nextCall()">הבא בטלפנייה</button>
-    <br><br>
-    <label>העלה קובץ Excel או CSV (עמודות: "שם", "טלפון"):</label><br>
-    <input type="file" id="importCallsFile" onchange="importCalls()">
-    <button onclick="downloadCallsExample()">הורד קובץ דוגמה</button>
 </div>
 
-<!-- תוכן לשונית הגדרות -->
+<!-- לשונית שליחת הודעה -->
+<div id="sendTab" class="tabContent">
+    <h2>שליחת הודעה</h2>
+    <textarea id="sendMessage" placeholder="כתוב כאן את ההודעה..." style="height:100px;"></textarea>
+    <h3>בחר נמענים:</h3>
+    <div>
+        <button onclick="chooseAllContacts()">בחר את כל אנשי הקשר</button>
+        <button onclick="chooseGroups()">בחר קבוצות</button>
+        <input type="file" id="importSendFile" onchange="importSendContacts()">
+        <button onclick="downloadContactsExample()">הורד קובץ דוגמה</button>
+    </div>
+    <div id="selectedRecipients" style="margin-top:20px;"></div>
+    <button onclick="confirmSend()">שלח הודעה</button>
+</div>
+
+<!-- לשונית שליחה מהטלפון -->
+<div id="phoneSendTab" class="tabContent">
+    <h2>שליחה מהטלפון</h2>
+    <h3>מספרי טלפון מנהלים מורשים:</h3>
+    <input type="text" id="managerPhone" placeholder="מספר מנהל להוספה">
+    <button onclick="saveManager()">הוסף מנהל</button>
+    <div id="managersList"></div>
+    <p>כאשר מספר מנהל ישלח הודעה, המערכת תשלח לו שאלה לאיזו קבוצה להעביר, והוא יענה עם מספר הקבוצה.</p>
+</div>
+
+<!-- לשונית הגדרות כלליות -->
 <div id="settingsTab" class="tabContent">
-    <h2>הגדרות</h2>
+    <h2>הגדרות כלליות</h2>
     <input type="text" id="defaultReply" placeholder="תגובת ברירת מחדל">
-    <button onclick="saveDefaultReply()">שמור תגובת ברירת מחדל</button>
+    <button onclick="saveDefaultReply()">שמור</button>
 </div>
 
-<!-- תוכן לשונית ניהול משתמשים -->
+<!-- לשונית ניהול משתמשים -->
 <div id="manageTab" class="tabContent">
     <h2>ניהול משתמשים</h2>
     <input type="text" id="newUser" placeholder="שם משתמש (מייל)">
     <input type="password" id="newPass" placeholder="סיסמה">
-    <input type="text" id="newSender" placeholder="שם שולח">
+    <input type="text" id="newSender" placeholder="שם שולח (Sender)">
     <label>בחר לשוניות למשתמש:</label><br>
-    <select id="newTabs" multiple size="4" style="height:100px;">
+    <select id="newTabs" multiple size="5" style="height:120px;">
         <option value="responses">תגובות</option>
         <option value="contacts">אנשי קשר</option>
+        <option value="groups">קבוצות</option>
         <option value="calls">טלפנייה</option>
+        <option value="send">שליחת הודעה</option>
+        <option value="phoneSend">שליחה מהטלפון</option>
         <option value="settings">הגדרות</option>
         <option value="manage">ניהול משתמשים</option>
-    </select>
-    <br><br>
+    </select><br><br>
     <button onclick="addUser()">הוסף משתמש</button>
-    <h3>משתמשים קיימים:</h3>
     <div id="usersList"></div>
 </div>
 <script>
-// גלובלי
+// גלובלים
 let currentUser = null;
 let userTabs = [];
+let selectedPhones = [];
 let defaultReply = "אין תגובה מתאימה.";
+let managers = [];
+let groups = {};
 
 async function login() {
     const username = document.getElementById('loginUser').value.trim();
@@ -218,23 +279,34 @@ function showApp() {
     document.getElementById('mainApp').style.display = 'block';
     const tabsArea = document.getElementById('tabsArea');
     tabsArea.innerHTML = '';
-    if (userTabs.includes('responses')) tabsArea.innerHTML += `<button onclick="openTab('responsesTab')">תגובות</button>`;
-    if (userTabs.includes('contacts')) tabsArea.innerHTML += `<button onclick="openTab('contactsTab')">אנשי קשר</button>`;
-    if (userTabs.includes('calls')) tabsArea.innerHTML += `<button onclick="openTab('callsTab')">טלפנייה</button>`;
-    if (userTabs.includes('settings')) tabsArea.innerHTML += `<button onclick="openTab('settingsTab')">הגדרות</button>`;
-    if (userTabs.includes('manage')) tabsArea.innerHTML += `<button onclick="openTab('manageTab')">ניהול משתמשים</button>`;
-    const buttons = tabsArea.querySelectorAll('button');
-    if (buttons.length > 0) openTab(buttons[0].getAttribute('onclick').split("'")[1]);
-    loadResponses();
-    loadContacts();
-    loadUsers();
+    userTabs.forEach(tab => {
+        const btn = document.createElement('button');
+        btn.innerText = getTabName(tab);
+        btn.onclick = () => openTab(tab + 'Tab');
+        tabsArea.appendChild(btn);
+    });
+    if (userTabs.length > 0) openTab(userTabs[0] + 'Tab');
+}
+
+function getTabName(tab) {
+    const names = {
+        responses: "תגובות",
+        contacts: "אנשי קשר",
+        groups: "קבוצות",
+        calls: "טלפנייה",
+        send: "שליחת הודעה",
+        phoneSend: "שליחה מהטלפון",
+        settings: "הגדרות",
+        manage: "ניהול משתמשים"
+    };
+    return names[tab] || tab;
 }
 
 function openTab(tabId) {
     document.querySelectorAll('.tabContent').forEach(tab => tab.classList.remove('active'));
     document.getElementById(tabId).classList.add('active');
     document.querySelectorAll('.tabs button').forEach(btn => btn.classList.remove('active'));
-    document.querySelector(`.tabs button[onclick="openTab('${tabId}')"]`).classList.add('active');
+    document.querySelector(`.tabs button[onclick="openTab('${tabId}')"]`)?.classList.add('active');
 }
 
 // תגובות
@@ -337,85 +409,94 @@ function nextCall() {
     document.getElementById('callTarget').innerHTML = `<div>${cells[0].innerText} - ${cells[1].innerText}</div>`;
 }
 
-// הגדרות
-function saveDefaultReply() {
-    const reply = document.getElementById('defaultReply').value.trim();
-    if (reply) {
-        defaultReply = reply;
-        alert('תגובת ברירת מחדל נשמרה!');
+// מנהלים
+function saveManager() {
+    const phone = document.getElementById('managerPhone').value.trim();
+    if (phone) {
+        managers.push(phone);
+        updateManagers();
+        document.getElementById('managerPhone').value = '';
     }
 }
 
-// ייבוא אנשי קשר
-function importContacts() {
-    importFile('importContactsFile');
-}
-
-// ייבוא טלפנייה
-function importCalls() {
-    importFile('importCallsFile');
-}
-
-function importFile(inputId) {
-    const file = document.getElementById(inputId).files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = async (e) => {
-        const data = new Uint8Array(e.target.result);
-        const workbook = XLSX.read(data, { type: 'array' });
-        const sheet = workbook.Sheets[workbook.SheetNames[0]];
-        const imported = XLSX.utils.sheet_to_json(sheet, { header: 1 });
-        imported.forEach(async row => {
-            if (row[0] && row[1]) {
-                await fetch(`/contacts?user=${currentUser}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name: row[0], phone: row[1] })
-                });
-            }
-        });
-        loadContacts();
-    };
-    reader.readAsArrayBuffer(file);
-}
-
-// קובץ דוגמה
-function downloadContactsExample() {
-    const wb = XLSX.utils.book_new();
-    const ws = XLSX.utils.aoa_to_sheet([["שם", "טלפון"], ["דוגמה", "0501234567"]]);
-    XLSX.utils.book_append_sheet(wb, ws, "אנשי קשר");
-    XLSX.writeFile(wb, "contacts_example.xlsx");
-}
-
-function downloadCallsExample() {
-    const wb = XLSX.utils.book_new();
-    const ws = XLSX.utils.aoa_to_sheet([["שם", "טלפון"], ["דוגמה", "0501234567"]]);
-    XLSX.utils.book_append_sheet(wb, ws, "טלפנייה");
-    XLSX.writeFile(wb, "calls_example.xlsx");
-}
-
-// ניהול משתמשים
-function loadUsers() {
-    // נטפל בזה אחר כך בשדרוג!
-}
-
-// האזנה ללחיצה על אנטר
-document.addEventListener('DOMContentLoaded', () => {
-    ["loginUser", "loginPass", "incoming", "reply", "testIncoming", "contactName", "contactPhone", "defaultReply", "newUser", "newPass", "newSender"].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) {
-            el.addEventListener('keypress', (e) => { if (e.key === 'Enter') el.nextElementSibling?.click(); });
-        }
+function updateManagers() {
+    const div = document.getElementById('managersList');
+    div.innerHTML = '';
+    managers.forEach((p, i) => {
+        const el = document.createElement('div');
+        el.innerText = p;
+        div.appendChild(el);
     });
+}
 
-    const savedUser = localStorage.getItem('user');
-    const savedTabs = localStorage.getItem('tabs');
-    if (savedUser && savedTabs) {
-        currentUser = savedUser;
-        userTabs = JSON.parse(savedTabs);
-        showApp();
+// קבוצות
+function saveGroup() {
+    const name = document.getElementById('groupName').value.trim();
+    if (name && !groups[name]) {
+        groups[name] = [];
+        updateGroups();
+        document.getElementById('groupName').value = '';
     }
-});
+}
+
+function updateGroups() {
+    const div = document.getElementById('groupsList');
+    div.innerHTML = '';
+    Object.keys(groups).forEach((g, i) => {
+        const el = document.createElement('div');
+        el.innerText = `${i + 1}. ${g}`;
+        div.appendChild(el);
+    });
+}
+
+// הודעות
+function chooseAllContacts() {
+    selectedPhones = [];
+    document.querySelectorAll('#contactsTable tbody tr').forEach(row => {
+        selectedPhones.push(row.cells[1].innerText);
+    });
+    updateSelected();
+}
+
+function chooseGroups() {
+    // נטפל בזה אחר כך
+}
+
+function updateSelected() {
+    const div = document.getElementById('selectedRecipients');
+    div.innerHTML = `<b>נבחרו ${selectedPhones.length} נמענים</b>`;
+}
+
+function confirmSend() {
+    if (!selectedPhones.length) {
+        alert('לא נבחרו נמענים!');
+        return;
+    }
+    const msg = document.getElementById('sendMessage').value.trim();
+    if (!msg) {
+        alert('לא הוזנה הודעה!');
+        return;
+    }
+    if (confirm(`האם לשלוח את ההודעה ל-${selectedPhones.length} נמענים?`)) {
+        sendSMS(selectedPhones, msg);
+    }
+}
+
+async function sendSMS(numbers, message) {
+    const res = await fetch('/send_sms', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ numbers, message, user: currentUser })
+    });
+    if (res.ok) {
+        alert('ההודעה נשלחה בהצלחה!');
+    } else {
+        alert('שליחה נכשלה.');
+    }
+}
+
+// עוד פונקציות נטפל בהמשך...
+
 </script>
 
 </body>
