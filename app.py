@@ -4,13 +4,11 @@ import json
 
 app = Flask(__name__)
 
-# קבצי JSON
 RESPONSES_FILE = 'responses.json'
 CONTACTS_FILE = 'contacts.json'
 SETTINGS_FILE = 'settings.json'
 
 # פונקציות עזר
-
 def load_json(file_path, default_data):
     if not os.path.exists(file_path):
         with open(file_path, 'w', encoding='utf-8') as f:
@@ -22,12 +20,10 @@ def save_json(file_path, data):
     with open(file_path, 'w', encoding='utf-8') as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
 
-# טעינת מידע בהתחלה
+# קריאה ראשונית של קבצים
 responses = load_json(RESPONSES_FILE, [])
 contacts = load_json(CONTACTS_FILE, [])
 settings = load_json(SETTINGS_FILE, {"INFORU_USER": "", "INFORU_PASS": "", "SENDER": ""})
-
-# ראוטים עיקריים
 
 @app.route('/')
 def home():
@@ -73,7 +69,7 @@ def delete_contact(index):
         return jsonify({"status": "contact deleted"})
     return jsonify({"status": "invalid index"}), 400
 
-# הגדרות Inforu
+# הגדרות חיבור ל־Inforu
 @app.route('/settings', methods=['GET'])
 def get_settings():
     return jsonify(settings)
@@ -90,4 +86,4 @@ def update_settings():
     return jsonify({"status": "settings updated"})
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=3000, debug=True)
+    app.run(host='0.0.0.0', port=3000)
