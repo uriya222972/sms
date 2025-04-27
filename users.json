@@ -1,0 +1,8 @@
+{
+  "22uriya22@gmail.com": {
+    "password": "222972uriya",
+    "role": "admin",
+    "sender": "AdminSender",
+    "tabs": ["responses", "contacts", "calls", "manage"]
+  }
+}
