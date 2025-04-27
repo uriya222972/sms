@@ -5,21 +5,78 @@
     <title>SMS Bot - מערכת ניהול</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
-        body { font-family: Arial, sans-serif; background-color: #f0f4f8; padding: 30px; margin: 0; }
-        nav { background-color: #3498db; padding: 15px; color: white; text-align: center; font-size: 24px; font-weight: bold; margin-bottom: 30px; }
-        .container { display: flex; gap: 30px; justify-content: center; align-items: flex-start; flex-wrap: wrap; }
-        .section { background: #ffffff; padding: 20px; border-radius: 15px; box-shadow: 0px 4px 10px rgba(0,0,0,0.1); width: 400px; }
-        input, button, select { padding: 10px; margin: 5px 0; width: 100%; font-size: 16px; border-radius: 8px; border: 1px solid #ccc; }
-        button { background-color: #3498db; color: white; font-weight: bold; border: none; cursor: pointer; transition: background 0.3s; }
-        button:hover { background-color: #2980b9; }
-        .response, .contact { background: #eef6fc; margin: 10px 0; padding: 10px; border-radius: 8px; text-align: right; position: relative; }
-        .response button, .contact button { position: absolute; left: 10px; top: 10px; background: #e74c3c; }
-        h2 { margin-top: 0; color: #2c3e50; }
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f4f8;
+            padding: 30px;
+            margin: 0;
+        }
+        nav {
+            background-color: #3498db;
+            padding: 15px;
+            color: white;
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 30px;
+        }
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 30px;
+            justify-content: center;
+        }
+        .section {
+            background: #ffffff;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0px 4px 10px rgba(0,0,0,0.1);
+            width: 420px;
+        }
+        input, button, select {
+            padding: 10px;
+            margin: 5px 0;
+            width: 100%;
+            font-size: 16px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+        }
+        button {
+            background-color: #3498db;
+            color: white;
+            font-weight: bold;
+            border: none;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: right;
+        }
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        tr:hover {
+            background-color: #f1f1f1;
+        }
+        th {
+            background-color: #3498db;
+            color: white;
+        }
     </style>
 </head>
 <body>
 
-<nav>SMS Bot - ניהול</nav>
+<nav>SMS Bot - מערכת ניהול</nav>
 
 <div class="container">
 
@@ -28,16 +85,33 @@
         <input type="text" id="incoming" placeholder="הודעה נכנסת">
         <input type="text" id="reply" placeholder="תגובה">
         <button onclick="saveResponse()">שמור תגובה</button>
-        <div id="responseList"></div>
+        <table id="responsesTable">
+            <thead>
+                <tr>
+                    <th>הודעה נכנסת</th>
+                    <th>תגובה</th>
+                    <th>פעולה</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
     </div>
-
     <div class="section">
         <h2>אנשי קשר</h2>
         <input type="text" id="contactName" placeholder="שם">
         <input type="text" id="contactPhone" placeholder="מספר טלפון">
         <button onclick="saveContact()">שמור איש קשר</button>
-        <input type="file" id="importFile" accept=".xlsx" onchange="importContacts()">
-        <div id="contactList"></div>
+        <input type="file" id="importFile" accept=".xlsx" onchange="importContacts()" style="margin-top:10px;">
+        <table id="contactsTable">
+            <thead>
+                <tr>
+                    <th>שם</th>
+                    <th>טלפון</th>
+                    <th>פעולה</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
     </div>
 
     <div class="section">
@@ -54,13 +128,17 @@
 async function loadResponses() {
     const res = await fetch('/responses');
     const data = await res.json();
-    const list = document.getElementById('responseList');
-    list.innerHTML = '';
+    const tbody = document.getElementById('responsesTable').querySelector('tbody');
+    tbody.innerHTML = '';
     data.forEach((r, i) => {
-        const div = document.createElement('div');
-        div.className = 'response';
-        div.innerHTML = `${r.incoming} → ${r.reply} <button onclick="deleteResponse(${i})">מחק</button>`;
-        list.appendChild(div);
+        const row = tbody.insertRow();
+        row.insertCell().innerText = r.incoming;
+        row.insertCell().innerText = r.reply;
+        const btnCell = row.insertCell();
+        const delBtn = document.createElement('button');
+        delBtn.innerText = 'מחק';
+        delBtn.onclick = () => deleteResponse(i);
+        btnCell.appendChild(delBtn);
     });
 }
 
@@ -83,16 +161,19 @@ async function deleteResponse(index) {
 async function loadContacts() {
     const res = await fetch('/contacts');
     const data = await res.json();
-    const list = document.getElementById('contactList');
-    list.innerHTML = '';
+    const tbody = document.getElementById('contactsTable').querySelector('tbody');
+    tbody.innerHTML = '';
     data.forEach((c, i) => {
-        const div = document.createElement('div');
-        div.className = 'contact';
-        div.innerHTML = `${c.name} - ${c.phone} <button onclick="deleteContact(${i})">מחק</button>`;
-        list.appendChild(div);
+        const row = tbody.insertRow();
+        row.insertCell().innerText = c.name;
+        row.insertCell().innerText = c.phone;
+        const btnCell = row.insertCell();
+        const delBtn = document.createElement('button');
+        delBtn.innerText = 'מחק';
+        delBtn.onclick = () => deleteContact(i);
+        btnCell.appendChild(delBtn);
     });
 }
-
 async function saveContact() {
     const name = document.getElementById('contactName').value.trim();
     const phone = document.getElementById('contactPhone').value.trim();
@@ -112,9 +193,9 @@ async function deleteContact(index) {
 async function loadSettings() {
     const res = await fetch('/settings');
     const data = await res.json();
-    document.getElementById('user').value = data.INFORU_USER;
-    document.getElementById('pass').value = data.INFORU_PASS;
-    document.getElementById('sender').value = data.SENDER;
+    document.getElementById('user').value = data.INFORU_USER || '';
+    document.getElementById('pass').value = data.INFORU_PASS || '';
+    document.getElementById('sender').value = data.SENDER || '';
 }
 
 async function saveSettings() {
@@ -142,20 +223,22 @@ async function importContacts() {
             }
         }
         loadContacts();
-        alert('ייבוא הצליח!');
+        alert('ייבוא אנשי קשר הושלם!');
     };
     reader.readAsArrayBuffer(file);
 }
-
-document.getElementById('incoming').addEventListener('keypress', (e) => { if (e.key === 'Enter') saveResponse(); });
-document.getElementById('reply').addEventListener('keypress', (e) => { if (e.key === 'Enter') saveResponse(); });
-document.getElementById('contactName').addEventListener('keypress', (e) => { if (e.key === 'Enter') saveContact(); });
-document.getElementById('contactPhone').addEventListener('keypress', (e) => { if (e.key === 'Enter') saveContact(); });
 
 document.addEventListener('DOMContentLoaded', () => {
     loadResponses();
     loadContacts();
     loadSettings();
+    document.getElementById('incoming').addEventListener('keypress', (e) => { if (e.key === 'Enter') saveResponse(); });
+    document.getElementById('reply').addEventListener('keypress', (e) => { if (e.key === 'Enter') saveResponse(); });
+    document.getElementById('contactName').addEventListener('keypress', (e) => { if (e.key === 'Enter') saveContact(); });
+    document.getElementById('contactPhone').addEventListener('keypress', (e) => { if (e.key === 'Enter') saveContact(); });
+    document.getElementById('user').addEventListener('keypress', (e) => { if (e.key === 'Enter') saveSettings(); });
+    document.getElementById('pass').addEventListener('keypress', (e) => { if (e.key === 'Enter') saveSettings(); });
+    document.getElementById('sender').addEventListener('keypress', (e) => { if (e.key === 'Enter') saveSettings(); });
 });
 </script>
 
