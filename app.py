@@ -368,3 +368,6 @@ def find_user_by_manager(phone):
 # ריצה
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=10000)
+@app.route('/')
+def index():
+    return send_from_directory('.', 'index.html')
