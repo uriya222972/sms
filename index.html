@@ -2,7 +2,7 @@
 <html lang="he" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>SMS Bot - מערכת ניהול</title>
+    <title>SMS Bot - התחברות</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         body {
@@ -72,61 +72,140 @@
             background-color: #3498db;
             color: white;
         }
+        #loginForm {
+            max-width: 400px;
+            margin: 50px auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 4px 10px rgba(0,0,0,0.1);
+            text-align: center;
+        }
     </style>
 </head>
 <body>
 
-<nav>SMS Bot - מערכת ניהול</nav>
+<nav id="mainNav">SMS Bot - התחברות</nav>
 
-<div class="container">
-
-    <div class="section">
-        <h2>תגובות</h2>
-        <input type="text" id="incoming" placeholder="הודעה נכנסת">
-        <input type="text" id="reply" placeholder="תגובה">
-        <button onclick="saveResponse()">שמור תגובה</button>
-        <table id="responsesTable">
-            <thead>
-                <tr>
-                    <th>הודעה נכנסת</th>
-                    <th>תגובה</th>
-                    <th>פעולה</th>
-                </tr>
-            </thead>
-            <tbody></tbody>
-        </table>
-    </div>
-    <div class="section">
-        <h2>אנשי קשר</h2>
-        <input type="text" id="contactName" placeholder="שם">
-        <input type="text" id="contactPhone" placeholder="מספר טלפון">
-        <button onclick="saveContact()">שמור איש קשר</button>
-        <input type="file" id="importFile" accept=".xlsx" onchange="importContacts()" style="margin-top:10px;">
-        <table id="contactsTable">
-            <thead>
-                <tr>
-                    <th>שם</th>
-                    <th>טלפון</th>
-                    <th>פעולה</th>
-                </tr>
-            </thead>
-            <tbody></tbody>
-        </table>
-    </div>
-
-    <div class="section">
-        <h2>הגדרות חיבור</h2>
-        <input type="text" id="user" placeholder="שם משתמש">
-        <input type="password" id="pass" placeholder="סיסמה">
-        <input type="text" id="sender" placeholder="שם שולח">
-        <button onclick="saveSettings()">שמור הגדרות</button>
-    </div>
-
+<div id="loginForm">
+    <h2>התחברות</h2>
+    <input type="text" id="loginUser" placeholder="שם משתמש">
+    <input type="password" id="loginPass" placeholder="סיסמה">
+    <button onclick="login()">התחבר</button>
+    <p id="loginError" style="color:red; display:none;">שם משתמש או סיסמה שגויים</p>
 </div>
 
+<div id="mainContent" style="display:none;">
+    <div class="container">
+        <div id="responsesSection" class="section">
+            <h2>תגובות</h2>
+            <input type="text" id="incoming" placeholder="הודעה נכנסת">
+            <input type="text" id="reply" placeholder="תגובה">
+            <button onclick="saveResponse()">שמור תגובה</button>
+            <table id="responsesTable">
+                <thead>
+                    <tr>
+                        <th>הודעה נכנסת</th>
+                        <th>תגובה</th>
+                        <th>פעולה</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+
+        <div id="contactsSection" class="section">
+            <h2>אנשי קשר</h2>
+            <input type="text" id="contactName" placeholder="שם">
+            <input type="text" id="contactPhone" placeholder="מספר טלפון">
+            <button onclick="saveContact()">שמור איש קשר</button>
+            <input type="file" id="importFile" accept=".xlsx" onchange="importContacts()" style="margin-top:10px;">
+            <table id="contactsTable">
+                <thead>
+                    <tr>
+                        <th>שם</th>
+                        <th>טלפון</th>
+                        <th>פעולה</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+
+        <div id="callsSection" class="section">
+            <h2>טלפנייה</h2>
+            <div id="callTarget"><h3>אין אנשי קשר לקרוא</h3></div>
+            <button onclick="nextCall()">הבא בטלפנייה</button>
+        </div>
+
+        <div id="settingsSection" class="section">
+            <h2>הגדרות כלליות</h2>
+            <input type="text" id="defaultReply" placeholder="תגובת ברירת מחדל">
+            <button onclick="saveDefaultReply()">שמור תגובת ברירת מחדל</button>
+        </div>
+
+        <div id="manageUsersSection" class="section" style="display:none;">
+            <h2>ניהול משתמשים</h2>
+            <input type="text" id="newUser" placeholder="שם משתמש (אימייל)">
+            <input type="password" id="newPass" placeholder="סיסמה">
+            <input type="text" id="newSender" placeholder="שם שולח">
+            <label>לשוניות מורשות:</label><br>
+            <select id="newTabs" multiple size="4" style="height:100px;">
+                <option value="responses">תגובות</option>
+                <option value="contacts">אנשי קשר</option>
+                <option value="calls">טלפנייה</option>
+                <option value="manage">ניהול משתמשים</option>
+            </select><br><br>
+            <button onclick="addUser()">הוסף משתמש</button>
+            <h3>משתמשים קיימים:</h3>
+            <div id="usersList"></div>
+        </div>
+
+    </div> <!-- סגירה של container -->
+</div> <!-- סגירה של mainContent -->
 <script>
+let currentUser = null;
+let userTabs = [];
+let defaultReply = "אין תגובה מתאימה.";
+
+async function login() {
+    const username = document.getElementById('loginUser').value.trim();
+    const password = document.getElementById('loginPass').value.trim();
+    if (!username || !password) return;
+    const res = await fetch('/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+    });
+    if (res.status === 200) {
+        const data = await res.json();
+        currentUser = username;
+        userTabs = data.tabs;
+        defaultReply = "אין תגובה מתאימה."; // נטען גם מהשרת בהמשך
+        localStorage.setItem('user', currentUser);
+        localStorage.setItem('tabs', JSON.stringify(userTabs));
+        showMainContent();
+    } else {
+        document.getElementById('loginError').style.display = 'block';
+    }
+}
+
+function showMainContent() {
+    document.getElementById('loginForm').style.display = 'none';
+    document.getElementById('mainContent').style.display = 'block';
+    document.getElementById('mainNav').innerText = "SMS Bot - מערכת ניהול";
+    if (!userTabs.includes('responses')) document.getElementById('responsesSection').style.display = 'none';
+    if (!userTabs.includes('contacts')) document.getElementById('contactsSection').style.display = 'none';
+    if (!userTabs.includes('calls')) document.getElementById('callsSection').style.display = 'none';
+    if (!userTabs.includes('manage')) document.getElementById('manageUsersSection').style.display = 'none';
+    loadResponses();
+    loadContacts();
+    loadUsers();
+}
+
 async function loadResponses() {
-    const res = await fetch('/responses');
+    if (!currentUser) return;
+    const res = await fetch(`/responses?user=${currentUser}`);
     const data = await res.json();
     const tbody = document.getElementById('responsesTable').querySelector('tbody');
     tbody.innerHTML = '';
@@ -146,7 +225,11 @@ async function saveResponse() {
     const incoming = document.getElementById('incoming').value.trim();
     const reply = document.getElementById('reply').value.trim();
     if (incoming && reply) {
-        await fetch('/responses', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ incoming, reply }) });
+        await fetch(`/responses?user=${currentUser}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ incoming, reply })
+        });
         document.getElementById('incoming').value = '';
         document.getElementById('reply').value = '';
         loadResponses();
@@ -154,12 +237,13 @@ async function saveResponse() {
 }
 
 async function deleteResponse(index) {
-    await fetch(`/responses/${index}`, { method: 'DELETE' });
+    await fetch(`/responses?user=${currentUser}&index=${index}`, { method: 'DELETE' });
     loadResponses();
 }
 
 async function loadContacts() {
-    const res = await fetch('/contacts');
+    if (!currentUser) return;
+    const res = await fetch(`/contacts?user=${currentUser}`);
     const data = await res.json();
     const tbody = document.getElementById('contactsTable').querySelector('tbody');
     tbody.innerHTML = '';
@@ -174,11 +258,16 @@ async function loadContacts() {
         btnCell.appendChild(delBtn);
     });
 }
+
 async function saveContact() {
     const name = document.getElementById('contactName').value.trim();
     const phone = document.getElementById('contactPhone').value.trim();
     if (name && phone) {
-        await fetch('/contacts', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, phone }) });
+        await fetch(`/contacts?user=${currentUser}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, phone })
+        });
         document.getElementById('contactName').value = '';
         document.getElementById('contactPhone').value = '';
         loadContacts();
@@ -186,29 +275,31 @@ async function saveContact() {
 }
 
 async function deleteContact(index) {
-    await fetch(`/contacts/${index}`, { method: 'DELETE' });
+    await fetch(`/contacts?user=${currentUser}&index=${index}`, { method: 'DELETE' });
     loadContacts();
 }
 
-async function loadSettings() {
-    const res = await fetch('/settings');
-    const data = await res.json();
-    document.getElementById('user').value = data.INFORU_USER || '';
-    document.getElementById('pass').value = data.INFORU_PASS || '';
-    document.getElementById('sender').value = data.SENDER || '';
+function nextCall() {
+    // פונקציה פשוטה להדגמה
+    const rows = document.querySelectorAll('#contactsTable tbody tr');
+    if (rows.length === 0) {
+        document.getElementById('callTarget').innerHTML = '<h3>אין אנשי קשר לקרוא</h3>';
+        return;
+    }
+    const random = Math.floor(Math.random() * rows.length);
+    const cells = rows[random].cells;
+    document.getElementById('callTarget').innerHTML = `<div>${cells[0].innerText} - ${cells[1].innerText}</div>`;
 }
 
-async function saveSettings() {
-    const user = document.getElementById('user').value.trim();
-    const pass = document.getElementById('pass').value.trim();
-    const sender = document.getElementById('sender').value.trim();
-    if (user && pass && sender) {
-        await fetch('/settings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ INFORU_USER: user, INFORU_PASS: pass, SENDER: sender }) });
-        alert('הגדרות נשמרו בהצלחה!');
+function saveDefaultReply() {
+    const reply = document.getElementById('defaultReply').value.trim();
+    if (reply) {
+        defaultReply = reply;
+        alert('תגובת ברירת מחדל נשמרה בהצלחה!');
     }
 }
 
-async function importContacts() {
+function importContacts() {
     const file = document.getElementById('importFile').files[0];
     if (!file) return;
     const reader = new FileReader();
@@ -219,7 +310,11 @@ async function importContacts() {
         const imported = XLSX.utils.sheet_to_json(firstSheet);
         for (const item of imported) {
             if (item.name && item.phone) {
-                await fetch('/contacts', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: item.name, phone: item.phone }) });
+                await fetch(`/contacts?user=${currentUser}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name: item.name, phone: item.phone })
+                });
             }
         }
         loadContacts();
@@ -228,17 +323,16 @@ async function importContacts() {
     reader.readAsArrayBuffer(file);
 }
 
+// ניהול משתמשים (נטפל בזה בחלק הבא אם תבקש)
+
 document.addEventListener('DOMContentLoaded', () => {
-    loadResponses();
-    loadContacts();
-    loadSettings();
-    document.getElementById('incoming').addEventListener('keypress', (e) => { if (e.key === 'Enter') saveResponse(); });
-    document.getElementById('reply').addEventListener('keypress', (e) => { if (e.key === 'Enter') saveResponse(); });
-    document.getElementById('contactName').addEventListener('keypress', (e) => { if (e.key === 'Enter') saveContact(); });
-    document.getElementById('contactPhone').addEventListener('keypress', (e) => { if (e.key === 'Enter') saveContact(); });
-    document.getElementById('user').addEventListener('keypress', (e) => { if (e.key === 'Enter') saveSettings(); });
-    document.getElementById('pass').addEventListener('keypress', (e) => { if (e.key === 'Enter') saveSettings(); });
-    document.getElementById('sender').addEventListener('keypress', (e) => { if (e.key === 'Enter') saveSettings(); });
+    const savedUser = localStorage.getItem('user');
+    const savedTabs = localStorage.getItem('tabs');
+    if (savedUser && savedTabs) {
+        currentUser = savedUser;
+        userTabs = JSON.parse(savedTabs);
+        showMainContent();
+    }
 });
 </script>
 
