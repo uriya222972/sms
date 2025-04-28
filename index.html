@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <title>SMS Bot - מערכת ניהול</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="index.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -26,7 +27,7 @@
             padding: 10px;
             gap: 10px;
             flex-wrap: wrap;
-            border-bottom: 2px solid #3498db;
+            border-bottom: 3px solid #3498db;
         }
         .tabs button {
             background: none;
@@ -40,7 +41,7 @@
         }
         .tabs button.active {
             border-bottom: 3px solid #3498db;
-            color: #3498db;
+            color: #2980b9;
             font-weight: bold;
         }
         .tabContent {
@@ -119,9 +120,7 @@
 </div>
 
 <div id="mainApp" style="display:none;">
-    <div class="tabs" id="tabsArea">
-        <!-- הכפתורים ללשוניות יכנסו פה דינמית -->
-    </div>
+    <div class="tabs" id="tabsArea"></div>
 
     <div id="responsesTab" class="tabContent"></div>
     <div id="contactsTab" class="tabContent"></div>
@@ -318,6 +317,8 @@ function openTab(tabId) {
     if (tabId === 'phoneSendTab') updateManagers();
     if (tabId === 'manageTab') loadUsers();
 }
+
+// כל הפונקציות נוספות כמו loadResponses, loadContacts, updateGroups וכו'...
 </script>
 
 </body>
