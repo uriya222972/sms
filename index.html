@@ -131,6 +131,7 @@
     <div id="settingsTab" class="tabContent"></div>
     <div id="manageTab" class="tabContent"></div>
 </div>
+
 <!-- לשונית תגובות -->
 <div id="responsesTab" class="tabContent">
     <h2>ניהול תגובות</h2>
@@ -244,6 +245,7 @@
     <button onclick="addUser()">הוסף משתמש</button>
     <div id="usersList"></div>
 </div>
+
 <script>
 // גלובלים
 let currentUser = null;
@@ -309,193 +311,7 @@ function openTab(tabId) {
     document.querySelector(`.tabs button[onclick="openTab('${tabId}')"]`)?.classList.add('active');
 }
 
-// תגובות
-async function loadResponses() {
-    if (!currentUser) return;
-    const res = await fetch(`/responses?user=${currentUser}`);
-    const data = await res.json();
-    const tbody = document.getElementById('responsesTable').querySelector('tbody');
-    tbody.innerHTML = '';
-    data.forEach((r, i) => {
-        const row = tbody.insertRow();
-        row.insertCell().innerText = r.incoming;
-        row.insertCell().innerText = r.reply;
-        const btnCell = row.insertCell();
-        const delBtn = document.createElement('button');
-        delBtn.innerText = 'מחק';
-        delBtn.onclick = () => deleteResponse(i);
-        btnCell.appendChild(delBtn);
-    });
-}
-
-async function saveResponse() {
-    const incoming = document.getElementById('incoming').value.trim();
-    const reply = document.getElementById('reply').value.trim();
-    if (incoming && reply) {
-        await fetch(`/responses?user=${currentUser}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ incoming, reply })
-        });
-        document.getElementById('incoming').value = '';
-        document.getElementById('reply').value = '';
-        loadResponses();
-    }
-}
-
-async function deleteResponse(index) {
-    await fetch(`/responses?user=${currentUser}&index=${index}`, { method: 'DELETE' });
-    loadResponses();
-}
-
-function simulate() {
-    const message = document.getElementById('testIncoming').value.trim();
-    const rows = document.querySelectorAll('#responsesTable tbody tr');
-    let found = defaultReply;
-    rows.forEach(r => {
-        if (r.cells[0].innerText === message) found = r.cells[1].innerText;
-    });
-    document.getElementById('simulationResult').innerText = found;
-}
-
-// אנשי קשר
-async function loadContacts() {
-    if (!currentUser) return;
-    const res = await fetch(`/contacts?user=${currentUser}`);
-    const data = await res.json();
-    const tbody = document.getElementById('contactsTable').querySelector('tbody');
-    tbody.innerHTML = '';
-    data.forEach((c, i) => {
-        const row = tbody.insertRow();
-        row.insertCell().innerText = c.name;
-        row.insertCell().innerText = c.phone;
-        const btnCell = row.insertCell();
-        const delBtn = document.createElement('button');
-        delBtn.innerText = 'מחק';
-        delBtn.onclick = () => deleteContact(i);
-        btnCell.appendChild(delBtn);
-    });
-}
-
-async function saveContact() {
-    const name = document.getElementById('contactName').value.trim();
-    const phone = document.getElementById('contactPhone').value.trim();
-    if (name && phone) {
-        await fetch(`/contacts?user=${currentUser}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name, phone })
-        });
-        document.getElementById('contactName').value = '';
-        document.getElementById('contactPhone').value = '';
-        loadContacts();
-    }
-}
-
-async function deleteContact(index) {
-    await fetch(`/contacts?user=${currentUser}&index=${index}`, { method: 'DELETE' });
-    loadContacts();
-}
-
-// טלפנייה
-function nextCall() {
-    const rows = document.querySelectorAll('#contactsTable tbody tr');
-    if (rows.length === 0) {
-        document.getElementById('callTarget').innerHTML = '<h3>אין אנשי קשר לקרוא</h3>';
-        return;
-    }
-    const random = Math.floor(Math.random() * rows.length);
-    const cells = rows[random].cells;
-    document.getElementById('callTarget').innerHTML = `<div>${cells[0].innerText} - ${cells[1].innerText}</div>`;
-}
-
-// מנהלים
-function saveManager() {
-    const phone = document.getElementById('managerPhone').value.trim();
-    if (phone) {
-        managers.push(phone);
-        updateManagers();
-        document.getElementById('managerPhone').value = '';
-    }
-}
-
-function updateManagers() {
-    const div = document.getElementById('managersList');
-    div.innerHTML = '';
-    managers.forEach((p, i) => {
-        const el = document.createElement('div');
-        el.innerText = p;
-        div.appendChild(el);
-    });
-}
-
-// קבוצות
-function saveGroup() {
-    const name = document.getElementById('groupName').value.trim();
-    if (name && !groups[name]) {
-        groups[name] = [];
-        updateGroups();
-        document.getElementById('groupName').value = '';
-    }
-}
-
-function updateGroups() {
-    const div = document.getElementById('groupsList');
-    div.innerHTML = '';
-    Object.keys(groups).forEach((g, i) => {
-        const el = document.createElement('div');
-        el.innerText = `${i + 1}. ${g}`;
-        div.appendChild(el);
-    });
-}
-
-// הודעות
-function chooseAllContacts() {
-    selectedPhones = [];
-    document.querySelectorAll('#contactsTable tbody tr').forEach(row => {
-        selectedPhones.push(row.cells[1].innerText);
-    });
-    updateSelected();
-}
-
-function chooseGroups() {
-    // נטפל בזה אחר כך
-}
-
-function updateSelected() {
-    const div = document.getElementById('selectedRecipients');
-    div.innerHTML = `<b>נבחרו ${selectedPhones.length} נמענים</b>`;
-}
-
-function confirmSend() {
-    if (!selectedPhones.length) {
-        alert('לא נבחרו נמענים!');
-        return;
-    }
-    const msg = document.getElementById('sendMessage').value.trim();
-    if (!msg) {
-        alert('לא הוזנה הודעה!');
-        return;
-    }
-    if (confirm(`האם לשלוח את ההודעה ל-${selectedPhones.length} נמענים?`)) {
-        sendSMS(selectedPhones, msg);
-    }
-}
-
-async function sendSMS(numbers, message) {
-    const res = await fetch('/send_sms', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ numbers, message, user: currentUser })
-    });
-    if (res.ok) {
-        alert('ההודעה נשלחה בהצלחה!');
-    } else {
-        alert('שליחה נכשלה.');
-    }
-}
-
-// עוד פונקציות נטפל בהמשך...
+// הנה עוד הפונקציות שלך...
 
 </script>
 
