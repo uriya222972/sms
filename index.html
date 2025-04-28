@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <title>SMS Bot - מערכת ניהול</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="index.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -27,6 +28,7 @@
             justify-content: center;
             flex-wrap: nowrap;
             overflow-x: auto;
+            border-bottom: 3px solid #3498db;
         }
         .tabs button {
             background: none;
@@ -37,7 +39,6 @@
             color: #34495e;
             border-bottom: 2px solid transparent;
             transition: 0.3s;
-            white-space: nowrap;
         }
         .tabs button.active {
             border-bottom: 3px solid #3498db;
@@ -122,17 +123,115 @@
 <div id="mainApp" style="display:none;">
     <div class="tabs" id="tabsArea"></div>
 
-    <div id="responsesTab" class="tabContent"></div>
-    <div id="contactsTab" class="tabContent"></div>
-    <div id="groupsTab" class="tabContent"></div>
-    <div id="callsTab" class="tabContent"></div>
-    <div id="sendTab" class="tabContent"></div>
-    <div id="phoneSendTab" class="tabContent"></div>
-    <div id="settingsTab" class="tabContent"></div>
-    <div id="manageTab" class="tabContent"></div>
+    <div id="responsesTab" class="tabContent">
+        <h2>ניהול תגובות</h2>
+        <input type="text" id="incoming" placeholder="הודעה נכנסת">
+        <input type="text" id="reply" placeholder="תגובה">
+        <button onclick="saveResponse()">שמור תגובה</button>
+        <h3>בדיקת הודעה:</h3>
+        <input type="text" id="testIncoming" placeholder="הודעה לבדיקה">
+        <button onclick="simulate()">בדוק</button>
+        <p id="simulationResult"></p>
+        <table id="responsesTable">
+            <thead>
+                <tr>
+                    <th>הודעה נכנסת</th>
+                    <th>תגובה</th>
+                    <th>פעולה</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <div id="contactsTab" class="tabContent">
+        <h2>אנשי קשר</h2>
+        <input type="text" id="contactName" placeholder="שם">
+        <input type="text" id="contactPhone" placeholder="טלפון">
+        <button onclick="saveContact()">שמור איש קשר</button>
+        <h3>ייבוא אנשי קשר (Excel/CSV)</h3>
+        <input type="file" id="importContactsFile" onchange="importContacts()">
+        <button onclick="downloadContactsExample()">הורד קובץ דוגמה</button>
+        <table id="contactsTable">
+            <thead>
+                <tr>
+                    <th>שם</th>
+                    <th>טלפון</th>
+                    <th>פעולה</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <div id="groupsTab" class="tabContent">
+        <h2>ניהול קבוצות</h2>
+        <input type="text" id="groupName" placeholder="שם קבוצה חדשה">
+        <button onclick="saveGroup()">צור קבוצה</button>
+        <h3>ייבוא קבוצות (Excel/CSV)</h3>
+        <input type="file" id="importGroupsFile" onchange="importGroups()">
+        <button onclick="downloadGroupsExample()">הורד קובץ דוגמה</button>
+        <div id="groupsList"></div>
+    </div>
+
+    <div id="callsTab" class="tabContent">
+        <h2>טלפנייה</h2>
+        <div id="callTarget"><h3>אין אנשי קשר לקרוא</h3></div>
+        <button onclick="nextCall()">הבא בטלפנייה</button>
+    </div>
+
+    <div id="sendTab" class="tabContent">
+        <h2>שליחת הודעה</h2>
+        <textarea id="sendMessage" placeholder="כתוב כאן את ההודעה..." style="height:100px;"></textarea>
+        <h3>בחר נמענים:</h3>
+        <div>
+            <button onclick="chooseAllContacts()">בחר את כל אנשי הקשר</button>
+            <button onclick="chooseGroups()">בחר קבוצות</button>
+            <input type="file" id="importSendFile" onchange="importSendContacts()">
+            <button onclick="downloadContactsExample()">הורד קובץ דוגמה</button>
+        </div>
+        <div id="selectedRecipients" style="margin-top:20px;"></div>
+        <button onclick="confirmSend()">שלח הודעה</button>
+    </div>
+
+    <div id="phoneSendTab" class="tabContent">
+        <h2>שליחה מהטלפון</h2>
+        <h3>מספרי טלפון מנהלים מורשים:</h3>
+        <input type="text" id="managerPhone" placeholder="מספר מנהל להוספה">
+        <button onclick="saveManager()">הוסף מנהל</button>
+        <div id="managersList"></div>
+        <p>כאשר מספר מנהל ישלח הודעה, המערכת תשלח לו שאלה לאיזו קבוצה להעביר, והוא יענה עם מספר הקבוצה.</p>
+    </div>
+
+    <div id="settingsTab" class="tabContent">
+        <h2>הגדרות כלליות</h2>
+        <input type="text" id="defaultReply" placeholder="תגובת ברירת מחדל">
+        <button onclick="saveDefaultReply()">שמור</button>
+    </div>
+
+    <div id="manageTab" class="tabContent">
+        <h2>ניהול משתמשים</h2>
+        <input type="text" id="newUser" placeholder="שם משתמש (מייל)">
+        <input type="password" id="newPass" placeholder="סיסמה">
+        <input type="text" id="newSender" placeholder="שם שולח (Sender)">
+        <label>בחר לשוניות למשתמש:</label><br>
+        <select id="newTabs" multiple size="5" style="height:120px;">
+            <option value="responses">תגובות</option>
+            <option value="contacts">אנשי קשר</option>
+            <option value="groups">קבוצות</option>
+            <option value="calls">טלפנייה</option>
+            <option value="send">שליחת הודעה</option>
+            <option value="phoneSend">שליחה מהטלפון</option>
+            <option value="settings">הגדרות</option>
+            <option value="manage">ניהול משתמשים</option>
+        </select><br><br>
+        <button onclick="addUser()">הוסף משתמש</button>
+        <div id="usersList"></div>
+    </div>
 </div>
 
 <script>
+// גלובלים
 let currentUser = null;
 let userTabs = [];
 
@@ -189,8 +288,7 @@ function openTab(tabId) {
     document.querySelectorAll('.tabContent').forEach(tab => tab.classList.remove('active'));
     document.getElementById(tabId).classList.add('active');
     document.querySelectorAll('.tabs button').forEach(btn => btn.classList.remove('active'));
-    const activeBtn = Array.from(document.querySelectorAll('.tabs button')).find(btn => btn.innerText === getTabName(tabId.replace('Tab', '')));
-    if (activeBtn) activeBtn.classList.add('active');
+    document.querySelector(`.tabs button[onclick="openTab('${tabId}')"]`)?.classList.add('active');
 }
 </script>
 
