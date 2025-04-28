@@ -309,10 +309,14 @@ function openTab(tabId) {
     document.getElementById(tabId).classList.add('active');
     document.querySelectorAll('.tabs button').forEach(btn => btn.classList.remove('active'));
     document.querySelector(`.tabs button[onclick="openTab('${tabId}')"]`)?.classList.add('active');
+
+    // טעינת מידע לכל לשונית
+    if (tabId === 'responsesTab') loadResponses();
+    if (tabId === 'contactsTab') loadContacts();
+    if (tabId === 'groupsTab') updateGroups();
+    if (tabId === 'phoneSendTab') updateManagers();
+    if (tabId === 'manageTab') loadUsers();
 }
-
-// הנה עוד הפונקציות שלך...
-
 </script>
 
 </body>
