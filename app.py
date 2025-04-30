@@ -39,3 +39,20 @@ def send_sms():
 
 if __name__ == "__main__":
     app.run(debug=True)
+
+
+app = Flask(__name__)
+
+users = {
+    "admin": "1234",
+    "test": "abcd"
+}
+
+@app.route('/login', methods=['POST'])
+def login():
+    data = request.get_json()
+    username = data.get('username')
+    password = data.get('password')
+    if username in users and users[username] == password:
+        return jsonify({"status": "success", "message": "התחברת בהצלחה"})
+    return jsonify({"status": "error", "message": "שם משתמש או סיסמה שגויים"}), 401
