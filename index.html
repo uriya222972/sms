@@ -1,10 +1,11 @@
 <!DOCTYPE html>
-<html lang="he" dir="rtl">
+
+<html dir="rtl" lang="he">
 <head>
-    <meta charset="UTF-8">
-    <title>SMS Bot - מערכת ניהול</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <style>
+<meta charset="utf-8"/>
+<title>SMS Bot - מערכת ניהול</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
         body {
             font-family: Arial, sans-serif;
             background-color: #f4f6f8;
@@ -20,16 +21,6 @@
             font-weight: bold;
         }
         .tabs {
-    position: sticky;
-    top: 0;
-    z-index: 100;
-    background-color: #3498db;
-    padding: 10px;
-    display: flex;
-    justify-content: center;
-    flex-wrap: wrap;
-    border-bottom: 2px solid #2980b9;
-
             display: flex;
             background-color: #ecf0f1;
             justify-content: center;
@@ -114,145 +105,133 @@
         }
     </style>
 </head>
-
 <body>
-
 <nav>SMS Bot - מערכת ניהול</nav>
-
 <div id="loginForm">
-    <h2>כניסה למערכת</h2>
-    <input type="text" id="loginUser" placeholder="שם משתמש">
-    <input type="password" id="loginPass" placeholder="סיסמה">
-    <button onclick="login()">התחבר</button>
-    <p id="loginError" style="color:red; display:none;">שם משתמש או סיסמה שגויים</p>
+<h2>כניסה למערכת</h2>
+<input id="loginUser" placeholder="שם משתמש" type="text"/>
+<input id="loginPass" placeholder="סיסמה" type="password"/>
+<button onclick="login()">התחבר</button>
+<p id="loginError" style="color:red; display:none;">שם משתמש או סיסמה שגויים</p>
 </div>
-
 <div id="mainApp" style="display:none;">
-    <div class="tabs" id="tabsArea">
-        <!-- הכפתורים ללשוניות יכנסו פה דינמית -->
-    </div>
-
-    <div id="responsesTab" class="tabContent"></div>
-    <div id="contactsTab" class="tabContent"></div>
-    <div id="groupsTab" class="tabContent"></div>
-    <div id="callsTab" class="tabContent"></div>
-    <div id="sendTab" class="tabContent"></div>
-    <div id="phoneSendTab" class="tabContent"></div>
-    <div id="settingsTab" class="tabContent"></div>
-    <div id="manageTab" class="tabContent"></div>
+<div class="tabs" id="tabsArea" style="display: flex; background-color: #3498db; padding: 10px; justify-content: center; flex-wrap: wrap;">
+<!-- הכפתורים ללשוניות יכנסו פה דינמית -->
+</div>
+<div class="tabContent" id="responsesTab"></div>
+<div class="tabContent" id="contactsTab"></div>
+<div class="tabContent" id="groupsTab"></div>
+<div class="tabContent" id="callsTab"></div>
+<div class="tabContent" id="sendTab"></div>
+<div class="tabContent" id="phoneSendTab"></div>
+<div class="tabContent" id="settingsTab"></div>
+<div class="tabContent" id="manageTab"></div>
 </div>
 <!-- לשונית תגובות -->
-<div id="responsesTab" class="tabContent">
-    <h2>ניהול תגובות</h2>
-    <input type="text" id="incoming" placeholder="הודעה נכנסת">
-    <input type="text" id="reply" placeholder="תגובה">
-    <button onclick="saveResponse()">שמור תגובה</button>
-    <h3>בדיקת הודעה:</h3>
-    <input type="text" id="testIncoming" placeholder="הודעה לבדיקה">
-    <button onclick="simulate()">בדוק</button>
-    <p id="simulationResult"></p>
-    <table id="responsesTable">
-        <thead>
-            <tr>
-                <th>הודעה נכנסת</th>
-                <th>תגובה</th>
-                <th>פעולה</th>
-            </tr>
-        </thead>
-        <tbody></tbody>
-    </table>
+<div class="tabContent" id="responsesTab">
+<h2>ניהול תגובות</h2>
+<input id="incoming" placeholder="הודעה נכנסת" type="text"/>
+<input id="reply" placeholder="תגובה" type="text"/>
+<button onclick="saveResponse()">שמור תגובה</button>
+<h3>בדיקת הודעה:</h3>
+<input id="testIncoming" placeholder="הודעה לבדיקה" type="text"/>
+<button onclick="simulate()">בדוק</button>
+<p id="simulationResult"></p>
+<table id="responsesTable">
+<thead>
+<tr>
+<th>הודעה נכנסת</th>
+<th>תגובה</th>
+<th>פעולה</th>
+</tr>
+</thead>
+<tbody></tbody>
+</table>
 </div>
-
 <!-- לשונית אנשי קשר -->
-<div id="contactsTab" class="tabContent">
-    <h2>אנשי קשר</h2>
-    <input type="text" id="contactName" placeholder="שם">
-    <input type="text" id="contactPhone" placeholder="טלפון">
-    <button onclick="saveContact()">שמור איש קשר</button>
-    <h3>ייבוא אנשי קשר (Excel/CSV)</h3>
-    <input type="file" id="importContactsFile" onchange="importContacts()">
-    <button onclick="downloadContactsExample()">הורד קובץ דוגמה</button>
-    <table id="contactsTable">
-        <thead>
-            <tr>
-                <th>שם</th>
-                <th>טלפון</th>
-                <th>פעולה</th>
-            </tr>
-        </thead>
-        <tbody></tbody>
-    </table>
+<div class="tabContent" id="contactsTab">
+<h2>אנשי קשר</h2>
+<input id="contactName" placeholder="שם" type="text"/>
+<input id="contactPhone" placeholder="טלפון" type="text"/>
+<button onclick="saveContact()">שמור איש קשר</button>
+<h3>ייבוא אנשי קשר (Excel/CSV)</h3>
+<input id="importContactsFile" onchange="importContacts()" type="file"/>
+<button onclick="downloadContactsExample()">הורד קובץ דוגמה</button>
+<table id="contactsTable">
+<thead>
+<tr>
+<th>שם</th>
+<th>טלפון</th>
+<th>פעולה</th>
+</tr>
+</thead>
+<tbody></tbody>
+</table>
 </div>
-
 <!-- לשונית קבוצות -->
-<div id="groupsTab" class="tabContent">
-    <h2>ניהול קבוצות</h2>
-    <input type="text" id="groupName" placeholder="שם קבוצה חדשה">
-    <button onclick="saveGroup()">צור קבוצה</button>
-    <h3>ייבוא קבוצות (Excel/CSV)</h3>
-    <input type="file" id="importGroupsFile" onchange="importGroups()">
-    <button onclick="downloadGroupsExample()">הורד קובץ דוגמה</button>
-    <div id="groupsList"></div>
+<div class="tabContent" id="groupsTab">
+<h2>ניהול קבוצות</h2>
+<input id="groupName" placeholder="שם קבוצה חדשה" type="text"/>
+<button onclick="saveGroup()">צור קבוצה</button>
+<h3>ייבוא קבוצות (Excel/CSV)</h3>
+<input id="importGroupsFile" onchange="importGroups()" type="file"/>
+<button onclick="downloadGroupsExample()">הורד קובץ דוגמה</button>
+<div id="groupsList"></div>
 </div>
-
 <!-- לשונית טלפנייה -->
-<div id="callsTab" class="tabContent">
-    <h2>טלפנייה</h2>
-    <div id="callTarget"><h3>אין אנשי קשר לקרוא</h3></div>
-    <button onclick="nextCall()">הבא בטלפנייה</button>
+<div class="tabContent" id="callsTab">
+<h2>טלפנייה</h2>
+<div id="callTarget"><h3>אין אנשי קשר לקרוא</h3></div>
+<button onclick="nextCall()">הבא בטלפנייה</button>
 </div>
-
 <!-- לשונית שליחת הודעה -->
-<div id="sendTab" class="tabContent">
-    <h2>שליחת הודעה</h2>
-    <textarea id="sendMessage" placeholder="כתוב כאן את ההודעה..." style="height:100px;"></textarea>
-    <h3>בחר נמענים:</h3>
-    <div>
-        <button onclick="chooseAllContacts()">בחר את כל אנשי הקשר</button>
-        <button onclick="chooseGroups()">בחר קבוצות</button>
-        <input type="file" id="importSendFile" onchange="importSendContacts()">
-        <button onclick="downloadContactsExample()">הורד קובץ דוגמה</button>
-    </div>
-    <div id="selectedRecipients" style="margin-top:20px;"></div>
-    <button onclick="confirmSend()">שלח הודעה</button>
+<div class="tabContent" id="sendTab">
+<h2>שליחת הודעה</h2>
+<textarea id="sendMessage" placeholder="כתוב כאן את ההודעה..." style="height:100px;"></textarea>
+<h3>בחר נמענים:</h3>
+<div>
+<button onclick="chooseAllContacts()">בחר את כל אנשי הקשר</button>
+<button onclick="chooseGroups()">בחר קבוצות</button>
+<input id="importSendFile" onchange="importSendContacts()" type="file"/>
+<button onclick="downloadContactsExample()">הורד קובץ דוגמה</button>
 </div>
-
+<div id="selectedRecipients" style="margin-top:20px;"></div>
+<button onclick="confirmSend()">שלח הודעה</button>
+</div>
 <!-- לשונית שליחה מהטלפון -->
-<div id="phoneSendTab" class="tabContent">
-    <h2>שליחה מהטלפון</h2>
-    <h3>מספרי טלפון מנהלים מורשים:</h3>
-    <input type="text" id="managerPhone" placeholder="מספר מנהל להוספה">
-    <button onclick="saveManager()">הוסף מנהל</button>
-    <div id="managersList"></div>
-    <p>כאשר מספר מנהל ישלח הודעה, המערכת תשלח לו שאלה לאיזו קבוצה להעביר, והוא יענה עם מספר הקבוצה.</p>
+<div class="tabContent" id="phoneSendTab">
+<h2>שליחה מהטלפון</h2>
+<h3>מספרי טלפון מנהלים מורשים:</h3>
+<input id="managerPhone" placeholder="מספר מנהל להוספה" type="text"/>
+<button onclick="saveManager()">הוסף מנהל</button>
+<div id="managersList"></div>
+<p>כאשר מספר מנהל ישלח הודעה, המערכת תשלח לו שאלה לאיזו קבוצה להעביר, והוא יענה עם מספר הקבוצה.</p>
 </div>
-
 <!-- לשונית הגדרות כלליות -->
-<div id="settingsTab" class="tabContent">
-    <h2>הגדרות כלליות</h2>
-    <input type="text" id="defaultReply" placeholder="תגובת ברירת מחדל">
-    <button onclick="saveDefaultReply()">שמור</button>
+<div class="tabContent" id="settingsTab">
+<h2>הגדרות כלליות</h2>
+<input id="defaultReply" placeholder="תגובת ברירת מחדל" type="text"/>
+<button onclick="saveDefaultReply()">שמור</button>
 </div>
-
 <!-- לשונית ניהול משתמשים -->
-<div id="manageTab" class="tabContent">
-    <h2>ניהול משתמשים</h2>
-    <input type="text" id="newUser" placeholder="שם משתמש (מייל)">
-    <input type="password" id="newPass" placeholder="סיסמה">
-    <input type="text" id="newSender" placeholder="שם שולח (Sender)">
-    <label>בחר לשוניות למשתמש:</label><br>
-    <select id="newTabs" multiple size="5" style="height:120px;">
-        <option value="responses">תגובות</option>
-        <option value="contacts">אנשי קשר</option>
-        <option value="groups">קבוצות</option>
-        <option value="calls">טלפנייה</option>
-        <option value="send">שליחת הודעה</option>
-        <option value="phoneSend">שליחה מהטלפון</option>
-        <option value="settings">הגדרות</option>
-        <option value="manage">ניהול משתמשים</option>
-    </select><br><br>
-    <button onclick="addUser()">הוסף משתמש</button>
-    <div id="usersList"></div>
+<div class="tabContent" id="manageTab">
+<h2>ניהול משתמשים</h2>
+<input id="newUser" placeholder="שם משתמש (מייל)" type="text"/>
+<input id="newPass" placeholder="סיסמה" type="password"/>
+<input id="newSender" placeholder="שם שולח (Sender)" type="text"/>
+<label>בחר לשוניות למשתמש:</label><br/>
+<select id="newTabs" multiple="" size="5" style="height:120px;">
+<option value="responses">תגובות</option>
+<option value="contacts">אנשי קשר</option>
+<option value="groups">קבוצות</option>
+<option value="calls">טלפנייה</option>
+<option value="send">שליחת הודעה</option>
+<option value="phoneSend">שליחה מהטלפון</option>
+<option value="settings">הגדרות</option>
+<option value="manage">ניהול משתמשים</option>
+</select><br/><br/>
+<button onclick="addUser()">הוסף משתמש</button>
+<div id="usersList"></div>
 </div>
 <script>
 // גלובלים
@@ -508,6 +487,5 @@ async function sendSMS(numbers, message) {
 // עוד פונקציות נטפל בהמשך...
 
 </script>
-
 </body>
 </html>
