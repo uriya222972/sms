@@ -1,58 +1,229 @@
-
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_from_directory
+import json
+import os
+import openpyxl
 import requests
 
 app = Flask(__name__)
 
-# פרטי החיבור ל־InforU
-INFORU_USERNAME = "22uriya22"
-INFORU_TOKEN = "4a549e05-8668-448f-b3a7-5ee7816ee0ad"
-INFORU_SENDER = "0537038545"
+# תיקיות שמירת קבצים
+DATA_FOLDER = 'data'
+RESPONSES_FOLDER = os.path.join(DATA_FOLDER, 'responses')
+CONTACTS_FOLDER = os.path.join(DATA_FOLDER, 'contacts')
+GROUPS_FOLDER = os.path.join(DATA_FOLDER, 'groups')
+MANAGERS_FILE = os.path.join(DATA_FOLDER, 'managers.json')
+USERS_FILE = os.path.join(DATA_FOLDER, 'users.json')
 
+# קישור ל-API של Inforu
+INFORU_URL = "https://uapi.inforu.co.il/SendMessageXml.ashx"
+
+# ודא שתיקיות קיימות
+for folder in [DATA_FOLDER, RESPONSES_FOLDER, CONTACTS_FOLDER, GROUPS_FOLDER]:
+    os.makedirs(folder, exist_ok=True)
+
+# טעינת משתמשים
+def load_users():
+    if os.path.exists(USERS_FILE):
+        with open(USERS_FILE, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    return {}
+
+# שמירת משתמשים
+def save_users(users):
+    with open(USERS_FILE, 'w', encoding='utf-8') as f:
+        json.dump(users, f, ensure_ascii=False, indent=2)
+
+# טעינת מנהלים
+def load_managers():
+    if os.path.exists(MANAGERS_FILE):
+        with open(MANAGERS_FILE, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    return []
+
+# שמירת מנהלים
+def save_managers(managers):
+    with open(MANAGERS_FILE, 'w', encoding='utf-8') as f:
+        json.dump(managers, f, ensure_ascii=False, indent=2)
+# התחברות משתמש
+@app.route('/login', methods=['POST'])
+def login():
+    data = request.json
+    users = load_users()
+    username = data.get('username')
+    password = data.get('password')
+    user = users.get(username)
+    if user and user.get('password') == password:
+        return jsonify({"tabs": user.get('tabs', [])})
+    return "Unauthorized", 401
+
+# תגובות - טעינה
+@app.route('/responses', methods=['GET'])
+def get_responses():
+    user = request.args.get('user')
+    filepath = os.path.join(RESPONSES_FOLDER, f"{user}.json")
+    if os.path.exists(filepath):
+        with open(filepath, 'r', encoding='utf-8') as f:
+            return jsonify(json.load(f))
+    return jsonify([])
+
+# תגובות - שמירה
+@app.route('/responses', methods=['POST'])
+def save_response():
+    user = request.args.get('user')
+    filepath = os.path.join(RESPONSES_FOLDER, f"{user}.json")
+    if os.path.exists(filepath):
+        with open(filepath, 'r', encoding='utf-8') as f:
+            responses = json.load(f)
+    else:
+        responses = []
+    new_response = request.json
+    responses.append(new_response)
+    with open(filepath, 'w', encoding='utf-8') as f:
+        json.dump(responses, f, ensure_ascii=False, indent=2)
+    return 'OK'
+
+# תגובות - מחיקה
+@app.route('/responses', methods=['DELETE'])
+def delete_response():
+    user = request.args.get('user')
+    index = int(request.args.get('index'))
+    filepath = os.path.join(RESPONSES_FOLDER, f"{user}.json")
+    if os.path.exists(filepath):
+        with open(filepath, 'r', encoding='utf-8') as f:
+            responses = json.load(f)
+        if 0 <= index < len(responses):
+            responses.pop(index)
+            with open(filepath, 'w', encoding='utf-8') as f:
+                json.dump(responses, f, ensure_ascii=False, indent=2)
+            return 'OK'
+    return 'Not Found', 404
+
+# אנשי קשר - טעינה
+@app.route('/contacts', methods=['GET'])
+def get_contacts():
+    user = request.args.get('user')
+    filepath = os.path.join(CONTACTS_FOLDER, f"{user}.json")
+    if os.path.exists(filepath):
+        with open(filepath, 'r', encoding='utf-8') as f:
+            return jsonify(json.load(f))
+    return jsonify([])
+
+# אנשי קשר - שמירה
+@app.route('/contacts', methods=['POST'])
+def save_contact():
+    user = request.args.get('user')
+    filepath = os.path.join(CONTACTS_FOLDER, f"{user}.json")
+    if os.path.exists(filepath):
+        with open(filepath, 'r', encoding='utf-8') as f:
+            contacts = json.load(f)
+    else:
+        contacts = []
+    new_contact = request.json
+    contacts.append(new_contact)
+    with open(filepath, 'w', encoding='utf-8') as f:
+        json.dump(contacts, f, ensure_ascii=False, indent=2)
+    return 'OK'
+
+# אנשי קשר - מחיקה
+@app.route('/contacts', methods=['DELETE'])
+def delete_contact():
+    user = request.args.get('user')
+    index = int(request.args.get('index'))
+    filepath = os.path.join(CONTACTS_FOLDER, f"{user}.json")
+    if os.path.exists(filepath):
+        with open(filepath, 'r', encoding='utf-8') as f:
+            contacts = json.load(f)
+        if 0 <= index < len(contacts):
+            contacts.pop(index)
+            with open(filepath, 'w', encoding='utf-8') as f:
+                json.dump(contacts, f, ensure_ascii=False, indent=2)
+            return 'OK'
+    return 'Not Found', 404
+# קבוצות - טעינה
+@app.route('/groups', methods=['GET'])
+def get_groups():
+    user = request.args.get('user')
+    filepath = os.path.join(GROUPS_FOLDER, f"{user}.json")
+    if os.path.exists(filepath):
+        with open(filepath, 'r', encoding='utf-8') as f:
+            return jsonify(json.load(f))
+    return jsonify({})
+
+# קבוצות - שמירה
+@app.route('/groups', methods=['POST'])
+def save_group():
+    user = request.args.get('user')
+    filepath = os.path.join(GROUPS_FOLDER, f"{user}.json")
+    if os.path.exists(filepath):
+        with open(filepath, 'r', encoding='utf-8') as f:
+            groups = json.load(f)
+    else:
+        groups = {}
+    new_group = request.json
+    group_name = new_group.get('group')
+    phones = new_group.get('phones', [])
+    if group_name:
+        groups[group_name] = phones
+        with open(filepath, 'w', encoding='utf-8') as f:
+            json.dump(groups, f, ensure_ascii=False, indent=2)
+    return 'OK'
+
+# מנהלים - טעינה
+@app.route('/managers', methods=['GET'])
+def get_managers():
+    return jsonify(load_managers())
+
+# מנהלים - שמירה
+@app.route('/managers', methods=['POST'])
+def save_manager():
+    managers = load_managers()
+    new_manager = request.json.get('phone')
+    if new_manager and new_manager not in managers:
+        managers.append(new_manager)
+        save_managers(managers)
+    return 'OK'
+
+# שליחת SMS אמיתית ל-Inforu
 @app.route('/send_sms', methods=['POST'])
 def send_sms():
     data = request.json
-    phone = data.get("phone")
-    message = data.get("message")
+    users = load_users()
+    user = data.get('user')
+    numbers = data.get('numbers', [])
+    message = data.get('message')
 
-    payload = {
-        "Auth": {
-            "Username": INFORU_USERNAME,
-            "Token": INFORU_TOKEN
-        },
-        "Content": {
-            "Message": message
-        },
-        "Recipients": {
-            "RecipientsPhone": [phone]
-        },
-        "Settings": {
-            "Sender": INFORU_SENDER
-        }
-    }
+    if not user or user not in users:
+        return "Unauthorized", 401
 
-    try:
-        res = requests.post("https://capi.inforu.co.il/api/v2/SendSms", json=payload)
-        return jsonify(res.json()), res.status_code
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+    user_data = users[user]
+    sender = user_data.get('sender')
+    username = user
+    password = user_data.get('password')
 
-if __name__ == "__main__":
-    app.run(debug=True)
+    # הכנת תוכן XML לשליחה ל-Inforu
+    to_numbers = "".join(f"<PhoneNumber>{n}</PhoneNumber>" for n in numbers)
 
+    xml_data = f"""<?xml version="1.0" encoding="utf-8"?>
+<Inforu>
+    <User>
+        <Username>{username}</Username>
+        <Password>{password}</Password>
+    </User>
+    <Content Type="sms">
+        <Message>{message}</Message>
+    </Content>
+    <Recipients>
+        {to_numbers}
+    </Recipients>
+    <Settings>
+        <Sender>{sender}</Sender>
+    </Settings>
+</Inforu>"""
 
-app = Flask(__name__)
+    headers = {'Content-Type': 'application/xml; charset=utf-8'}
+    response = requests.post(INFORU_URL, data=xml_data.encode('utf-8'), headers=headers)
 
-users = {
-    "admin": "1234",
-    "test": "abcd"
-}
-
-@app.route('/login', methods=['POST'])
-def login():
-    data = request.get_json()
-    username = data.get('username')
-    password = data.get('password')
-    if username in users and users[username] == password:
-        return jsonify({"status": "success", "message": "התחברת בהצלחה"})
-    return jsonify({"status": "error", "message": "שם משתמש או סיסמה שגויים"}), 401
+    if response.status_code == 200:
+        return "OK"
+    else:
+        return "Error", 500
