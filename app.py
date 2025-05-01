@@ -227,3 +227,147 @@ def send_sms():
         return "OK"
     else:
         return "Error", 500
+# טיפול בהודעות נכנסות מהטלפון (API דמה - אפשר להתחבר ל-Inforu לקבלת Webhook אמיתי)
+@app.route('/incoming', methods=['POST'])
+def incoming_sms():
+    data = request.json
+    from_number = data.get('from')
+    message = data.get('message')
+    
+    managers = load_managers()
+    if from_number not in managers:
+        return "Unauthorized", 401
+
+    # שלב ראשון: אם מגיעה הודעה רגילה -> שולחים למנהל שאלה
+    user = find_user_by_manager(from_number)
+    if not user:
+        return "No user", 404
+
+    # טוענים קבוצות
+    groups_path = os.path.join(GROUPS_FOLDER, f"{user}.json")
+    if not os.path.exists(groups_path):
+        return "No groups", 404
+
+    with open(groups_path, 'r', encoding='utf-8') as f:
+        user_groups = json.load(f)
+
+    # שמירת ההודעה האחרונה באופן זמני בקובץ
+    temp_file = os.path.join(DATA_FOLDER, f"{from_number}_temp.json")
+    with open(temp_file, 'w', encoding='utf-8') as f:
+        json.dump({"user": user, "message": message, "groups": list(user_groups.keys())}, f, ensure_ascii=False)
+
+    # מחזירים לו שאלה: "לאיזו קבוצה לשלוח?"
+    group_list = "\n".join([f"{i+1}. {g}" for i, g in enumerate(user_groups.keys())])
+    answer = f"בחר קבוצה לשליחה:\n{group_list}"
+
+    send_single_sms(from_number, answer, user)
+    return "OK"
+
+# קבלת תשובה מהטלפון לגבי מספר קבוצה
+@app.route('/incoming_reply', methods=['POST'])
+def incoming_reply():
+    data = request.json
+    from_number = data.get('from')
+    answer = data.get('message')
+
+    temp_file = os.path.join(DATA_FOLDER, f"{from_number}_temp.json")
+    if not os.path.exists(temp_file):
+        return "No pending message", 404
+
+    with open(temp_file, 'r', encoding='utf-8') as f:
+        temp_data = json.load(f)
+
+    user = temp_data['user']
+    original_message = temp_data['message']
+    group_names = temp_data['groups']
+
+    try:
+        group_index = int(answer.strip()) - 1
+        group_name = group_names[group_index]
+    except:
+        return "Invalid group", 400
+
+    # שליחת הודעה לקבוצה שנבחרה
+    groups_path = os.path.join(GROUPS_FOLDER, f"{user}.json")
+    with open(groups_path, 'r', encoding='utf-8') as f:
+        groups = json.load(f)
+
+    phones = groups.get(group_name, [])
+    send_bulk_sms(phones, original_message, user)
+
+    # מוחקים קובץ זמני
+    os.remove(temp_file)
+
+    send_single_sms(from_number, "הודעה נשלחה בהצלחה!", user)
+    return "OK"
+
+# עוזר: שליחת SMS יחיד
+def send_single_sms(phone, message, user):
+    users = load_users()
+    user_data = users.get(user)
+    if not user_data:
+        return
+
+    xml_data = f"""<?xml version="1.0" encoding="utf-8"?>
+<Inforu>
+    <User>
+        <Username>{user}</Username>
+        <Password>{user_data.get('password')}</Password>
+    </User>
+    <Content Type="sms">
+        <Message>{message}</Message>
+    </Content>
+    <Recipients>
+        <PhoneNumber>{phone}</PhoneNumber>
+    </Recipients>
+    <Settings>
+        <Sender>{user_data.get('sender')}</Sender>
+    </Settings>
+</Inforu>"""
+
+    headers = {'Content-Type': 'application/xml; charset=utf-8'}
+    requests.post(INFORU_URL, data=xml_data.encode('utf-8'), headers=headers)
+
+# עוזר: שליחת SMS לכמה
+def send_bulk_sms(numbers, message, user):
+    users = load_users()
+    user_data = users.get(user)
+    if not user_data:
+        return
+
+    numbers_xml = "".join(f"<PhoneNumber>{n}</PhoneNumber>" for n in numbers)
+    
+    xml_data = f"""<?xml version="1.0" encoding="utf-8"?>
+<Inforu>
+    <User>
+        <Username>{user}</Username>
+        <Password>{user_data.get('password')}</Password>
+    </User>
+    <Content Type="sms">
+        <Message>{message}</Message>
+    </Content>
+    <Recipients>
+        {numbers_xml}
+    </Recipients>
+    <Settings>
+        <Sender>{user_data.get('sender')}</Sender>
+    </Settings>
+</Inforu>"""
+
+    headers = {'Content-Type': 'application/xml; charset=utf-8'}
+    requests.post(INFORU_URL, data=xml_data.encode('utf-8'), headers=headers)
+
+# למצוא משתמש לפי מספר מנהל
+def find_user_by_manager(phone):
+    users = load_users()
+    for user, data in users.items():
+        if 'sender' in data:  # משתמשים אמיתיים
+            return user
+    return None
+@app.route('/')
+def index():
+    return send_from_directory('.', 'index.html')
+
+# ריצה
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=10000)
