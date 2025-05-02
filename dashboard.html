@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="he">
+<head>
+  <meta charset="UTF-8">
+  <title>לוח ניהול מערכת סמס</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f4f6f8;
+    }
+    header {
+      background-color: #3498db;
+      color: white;
+      padding: 15px;
+      text-align: center;
+      font-size: 24px;
+    }
+    nav {
+      display: flex;
+      background-color: #ecf0f1;
+      padding: 10px;
+      justify-content: center;
+      gap: 20px;
+    }
+    nav button {
+      background: none;
+      border: none;
+      font-size: 16px;
+      cursor: pointer;
+      padding: 10px;
+      border-bottom: 2px solid transparent;
+    }
+    nav button.active {
+      border-bottom: 2px solid #3498db;
+      color: #3498db;
+    }
+    .tab-content {
+      display: none;
+      padding: 20px;
+    }
+    .tab-content.active {
+      display: block;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+      background: white;
+    }
+    th, td {
+      padding: 10px;
+      border: 1px solid #ddd;
+      text-align: right;
+    }
+    th {
+      background-color: #f2f2f2;
+    }
+  </style>
+</head>
+<body>
+  <header>ברוך הבא למערכת הסמסים</header>
+  <nav>
+    <button onclick="showTab('contacts')" class="active">אנשי קשר</button>
+    <button onclick="showTab('groups')">קבוצות</button>
+    <button onclick="showTab('responses')">תגובות</button>
+    <button onclick="showTab('stats')">סטטיסטיקות</button>
+  </nav>
+
+  <div id="contacts" class="tab-content active">
+    <h2>אנשי קשר</h2>
+    <table id="contactsTable">
+      <thead><tr><th>שם</th><th>טלפון</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <div id="groups" class="tab-content">
+    <h2>קבוצות</h2>
+    <table id="groupsTable">
+      <thead><tr><th>שם קבוצה</th><th>מספרים</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <div id="responses" class="tab-content">
+    <h2>תגובות</h2>
+    <table id="responsesTable">
+      <thead><tr><th>מילת מפתח</th><th>תגובה</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <div id="stats" class="tab-content">
+    <h2>סטטיסטיקות</h2>
+    <table id="statsTable">
+      <thead><tr><th>תאריך</th><th>כמות הודעות</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <script>
+    const user = localStorage.getItem('username');
+    if (!user) window.location.href = '/';
+
+    function showTab(id) {
+      document.querySelectorAll('.tab-content').forEach(div => div.classList.remove('active'));
+      document.querySelectorAll('nav button').forEach(btn => btn.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+      document.querySelector(`nav button[onclick="showTab('${id}')"]`).classList.add('active');
+    }
+
+    async function loadContacts() {
+      const res = await fetch(`/contacts?user=${user}`);
+      const contacts = await res.json();
+      const tbody = document.querySelector('#contactsTable tbody');
+      tbody.innerHTML = contacts.map(c => `<tr><td>${c.name}</td><td>${c.phone}</td></tr>`).join('');
+    }
+
+    async function loadGroups() {
+      const res = await fetch(`/groups?user=${user}`);
+      const groups = await res.json();
+      const tbody = document.querySelector('#groupsTable tbody');
+      tbody.innerHTML = Object.entries(groups).map(([g, phones]) => `<tr><td>${g}</td><td>${phones.join(', ')}</td></tr>`).join('');
+    }
+
+    async function loadResponses() {
+      const res = await fetch(`/responses?user=${user}`);
+      const responses = await res.json();
+      const tbody = document.querySelector('#responsesTable tbody');
+      tbody.innerHTML = responses.map(r => `<tr><td>${r.trigger}</td><td>${r.reply}</td></tr>`).join('');
+    }
+
+    async function loadStats() {
+      const res = await fetch(`/stats?user=${user}`);
+      const stats = await res.json();
+      const tbody = document.querySelector('#statsTable tbody');
+      tbody.innerHTML = Object.entries(stats).map(([date, info]) => `<tr><td>${date}</td><td>${info.total}</td></tr>`).join('');
+    }
+
+    loadContacts();
+    loadGroups();
+    loadResponses();
+    loadStats();
+  </script>
+</body>
+</html>
+
