@@ -2,86 +2,74 @@
 <html dir="rtl" lang="he">
 <head>
   <meta charset="UTF-8">
-  <title>התחברות למערכת הסמסים</title>
+  <title>התחברות למערכת סמס</title>
   <style>
     body {
       font-family: Arial, sans-serif;
-      background-color: #f2f2f2;
+      background-color: #f4f6f8;
       display: flex;
       justify-content: center;
       align-items: center;
       height: 100vh;
+      margin: 0;
     }
     .login-box {
-      background: white;
+      background-color: white;
       padding: 30px;
-      border-radius: 12px;
-      box-shadow: 0 0 15px rgba(0,0,0,0.1);
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
       width: 300px;
       text-align: center;
     }
+    h2 {
+      margin-bottom: 20px;
+    }
     input {
-      width: 90%;
+      width: 100%;
       padding: 10px;
       margin: 10px 0;
       border: 1px solid #ccc;
-      border-radius: 6px;
+      border-radius: 5px;
     }
     button {
-      padding: 10px 20px;
-      background: #3498db;
+      width: 100%;
+      padding: 10px;
+      background-color: #3498db;
       color: white;
       border: none;
-      border-radius: 6px;
+      border-radius: 5px;
       cursor: pointer;
     }
-    .error {
-      color: red;
-      margin-top: 10px;
+    button:hover {
+      background-color: #2980b9;
     }
   </style>
 </head>
 <body>
   <div class="login-box">
     <h2>התחברות</h2>
-    <input type="text" id="username" placeholder="שם משתמש">
-    <input type="password" id="password" placeholder="סיסמה">
+    <input id="loginUser" type="text" placeholder="שם משתמש" />
+    <input id="loginPass" type="password" placeholder="סיסמה" />
     <button onclick="login()">התחבר</button>
-    <div class="error" id="errorMsg"></div>
   </div>
 
   <script>
     async function login() {
-      const username = document.getElementById('username').value.trim();
-      const password = document.getElementById('password').value.trim();
-      const errorMsg = document.getElementById('errorMsg');
+      const username = document.getElementById('loginUser').value.trim();
+      const password = document.getElementById('loginPass').value.trim();
+      const res = await fetch('/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      });
 
-      if (!username || !password) {
-        errorMsg.textContent = 'נא למלא שם משתמש וסיסמה.';
-        return;
-      }
-
-      try {
-        const res = await fetch('/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username, password })
-        });
-
-        if (res.status === 200) {
-          const data = await res.json();
-          localStorage.setItem('username', username);
-          alert('התחברת בהצלחה!');
-          // כאן אפשר להפנות לעמוד הראשי של המערכת:
-          // window.location.href = '/dashboard.html';
-        } else {
-          errorMsg.textContent = 'שם משתמש או סיסמה שגויים.';
-        }
-      } catch (e) {
-        errorMsg.textContent = 'שגיאה בהתחברות לשרת.';
+      if (res.ok) {
+        localStorage.setItem('username', username);
+        window.location.href = "/dashboard";
+      } else {
+        alert('שם משתמש או סיסמה שגויים');
       }
     }
   </script>
 </body>
 </html>
-
