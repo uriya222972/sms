@@ -56,16 +56,75 @@
     th {
       background-color: #f2f2f2;
     }
+    #send-box {
+      background: #fff;
+      padding: 20px;
+      margin: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    #history-box {
+      background: #fff;
+      padding: 20px;
+      margin: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    textarea, input, select {
+      width: 100%;
+      margin: 10px 0;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+    button.send {
+      background-color: #2ecc71;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    .logout {
+      position: absolute;
+      left: 20px;
+      top: 20px;
+      background: #e74c3c;
+      color: white;
+      padding: 5px 10px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
-  <header>ברוך הבא למערכת הסמסים</header>
+  <header>
+    ברוך הבא למערכת הסמסים
+    <button class="logout" onclick="logout()">התנתק</button>
+  </header>
   <nav>
     <button onclick="showTab('contacts')" class="active">אנשי קשר</button>
     <button onclick="showTab('groups')">קבוצות</button>
     <button onclick="showTab('responses')">תגובות</button>
     <button onclick="showTab('stats')">סטטיסטיקות</button>
   </nav>
+
+  <div id="send-box">
+    <h2>שליחת הודעה</h2>
+    <textarea id="message" rows="4" placeholder="הקלד את תוכן ההודעה כאן..."></textarea>
+    <select id="groupSelect">
+      <option value="">בחר קבוצה לשליחה...</option>
+    </select>
+    <input type="text" id="numbers" placeholder="או הקלד מספרים עם פסיקים למשל: 0501234567,0523456789">
+    <button class="send" onclick="sendSMS()">שלח הודעה</button>
+    <div id="sendStatus"></div>
+  </div>
+
+  <div id="history-box">
+    <h2>היסטוריית שליחות</h2>
+    <ul id="historyList"></ul>
+  </div>
 
   <div id="contacts" class="tab-content active">
     <h2>אנשי קשר</h2>
@@ -103,6 +162,9 @@
     const user = localStorage.getItem('username');
     if (!user) window.location.href = '/';
 
+    let groupData = {};
+    let history = [];
+
     function showTab(id) {
       document.querySelectorAll('.tab-content').forEach(div => div.classList.remove('active'));
       document.querySelectorAll('nav button').forEach(btn => btn.classList.remove('active'));
@@ -120,8 +182,17 @@
     async function loadGroups() {
       const res = await fetch(`/groups?user=${user}`);
       const groups = await res.json();
+      groupData = groups;
       const tbody = document.querySelector('#groupsTable tbody');
-      tbody.innerHTML = Object.entries(groups).map(([g, phones]) => `<tr><td>${g}</td><td>${phones.join(', ')}</td></tr>`).join('');
+      const select = document.getElementById('groupSelect');
+      select.innerHTML = '<option value="">בחר קבוצה לשליחה...</option>';
+      for (const [name, phones] of Object.entries(groups)) {
+        tbody.innerHTML += `<tr><td>${name}</td><td>${phones.join(', ')}</td></tr>`;
+        const option = document.createElement('option');
+        option.value = name;
+        option.textContent = name;
+        select.appendChild(option);
+      }
     }
 
     async function loadResponses() {
@@ -135,7 +206,49 @@
       const res = await fetch(`/stats?user=${user}`);
       const stats = await res.json();
       const tbody = document.querySelector('#statsTable tbody');
-      tbody.innerHTML = Object.entries(stats).map(([date, info]) => `<tr><td>${date}</td><td>${info.total}</td></tr>`).join('');
+      tbody.innerHTML = Object.entries(stats).map(([date, info]) => `<tr><td>${date}</td><td>${info.total || info.count || 0}</td></tr>`).join('');
+    }
+
+    function updateHistory(message, numbers) {
+      const ul = document.getElementById('historyList');
+      const time = new Date().toLocaleTimeString();
+      const li = document.createElement('li');
+      li.textContent = `[${time}] אל: ${numbers.join(', ')} - תוכן: ${message}`;
+      ul.prepend(li);
+    }
+
+    async function sendSMS() {
+      const message = document.getElementById('message').value.trim();
+      const group = document.getElementById('groupSelect').value;
+      const rawNumbers = document.getElementById('numbers').value;
+      let numbers = rawNumbers.split(',').map(n => n.trim()).filter(n => n);
+
+      if (!numbers.length && group && groupData[group]) {
+        numbers = groupData[group];
+      }
+
+      const status = document.getElementById('sendStatus');
+      if (!message || numbers.length === 0) {
+        status.textContent = 'יש למלא הודעה ולבחור קבוצה או להקליד מספרים';
+        return;
+      }
+
+      const res = await fetch('/send_now', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user, message, numbers })
+      });
+      if (res.status === 200) {
+        status.textContent = 'ההודעה נשלחה!';
+        updateHistory(message, numbers);
+      } else {
+        status.textContent = 'שגיאה בשליחה';
+      }
+    }
+
+    function logout() {
+      localStorage.clear();
+      window.location.href = '/';
     }
 
     loadContacts();
@@ -145,4 +258,3 @@
   </script>
 </body>
 </html>
-
