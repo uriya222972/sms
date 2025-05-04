@@ -61,6 +61,18 @@ def load_history():
     return []
 
 
+@app.route('/login', methods=['POST'])
+def login():
+    data = request.json
+    users = load_users()
+    username = data.get('username')
+    password = data.get('password')
+    user = users.get(username)
+    if user and user.get('password') == password:
+        return jsonify({"tabs": ["contacts", "groups", "responses", "stats"]})
+    return "Unauthorized", 401
+
+
 @app.route('/send_now', methods=['POST'])
 def send_now():
     data = request.json
