@@ -5,87 +5,26 @@
   <title>תרומה לעמותה</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      background-color: #f5f5f5;
-      margin: 0;
-      padding: 0;
-      text-align: center;
-    }
-
-    header {
-      background-color: #0073e6;
-      color: white;
-      padding: 20px;
-      font-size: 26px;
-    }
-
-    .hero-image {
-      width: 100%;
-      max-width: 700px;
-      margin: 30px auto;
-      display: block;
-    }
-
-    .stats {
-      background-color: #ffffff;
-      margin: 20px auto;
-      padding: 20px;
-      max-width: 500px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
-      font-size: 20px;
-      direction: rtl;
-    }
-
-    iframe {
-      width: 100%;
-      max-width: 800px;
-      height: 1000px;
-      border: none;
-      margin: 30px auto;
-      display: block;
-    }
-
-    footer {
-      background-color: #eee;
-      padding: 15px;
-      font-size: 14px;
-      margin-top: 40px;
-    }
+    body { font-family: Arial, sans-serif; background-color: #f5f5f5; text-align: center; margin: 0; padding: 0; }
+    header { background-color: #0073e6; color: white; padding: 20px; font-size: 26px; }
+    .hero-image { width: 100%; max-width: 700px; margin: 30px auto; display: block; }
+    .stats { background-color: #ffffff; margin: 20px auto; padding: 20px; max-width: 500px; box-shadow: 0 0 10px rgba(0,0,0,0.1); font-size: 20px; direction: rtl; }
+    iframe { width: 100%; max-width: 800px; height: 1000px; border: none; margin: 30px auto; display: block; }
+    footer { background-color: #eee; padding: 15px; font-size: 14px; margin-top: 40px; }
   </style>
 </head>
 <body>
-
-  <header>
-    דף התרומה הרשמי של העמותה
-  </header>
-
-  <!-- לוגו / כותרת גרפית -->
+  <header>דף התרומה הרשמי של העמותה</header>
   <img src="your-image.jpg" alt="לוגו או כותרת גרפית" class="hero-image">
-
-  <!-- נתונים חיים -->
   <div class="stats">
-    📞 מאזינים עכשיו לקו: <span id="listeners">טוען...</span>
+    📞 מאזינים עכשיו: <span id="listeners">טוען...</span><br>
+    ⏱ דקות שיחה ב־24 שעות: <span id="minutes">טוען...</span>
   </div>
-
-  <!-- דף התרומה -->
   <iframe src="https://www.matara.pro/nedarimplus/online/?mosad=7010838" allowfullscreen></iframe>
-
-  <footer>
-    © כל הזכויות שמורות לעמותה
-  </footer>
-
-  <!-- טעינת מספר המאזינים מ-Render שלך -->
+  <footer>© כל הזכויות שמורות לעמותה</footer>
   <script>
-    fetch('https://sms-h75u.onrender.com/listeners.txt')
-      .then(response => response.text())
-      .then(data => {
-        document.getElementById('listeners').innerText = data.trim();
-      })
-      .catch(() => {
-        document.getElementById('listeners').innerText = '—';
-      });
+    fetch('/listeners.txt').then(r => r.text()).then(t => document.getElementById("listeners").innerText = t.trim());
+    fetch('/minutes.txt').then(r => r.text()).then(t => document.getElementById("minutes").innerText = t.trim());
   </script>
-
 </body>
 </html>
