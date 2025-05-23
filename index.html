@@ -60,7 +60,7 @@
     דף התרומה הרשמי של העמותה
   </header>
 
-  <!-- תמונה עליונה (אפשר להחליף) -->
+  <!-- לוגו / כותרת גרפית -->
   <img src="your-image.jpg" alt="לוגו או כותרת גרפית" class="hero-image">
 
   <!-- נתונים חיים -->
@@ -68,17 +68,17 @@
     📞 מאזינים עכשיו לקו: <span id="listeners">טוען...</span>
   </div>
 
-  <!-- הטמעת דף התרומה -->
+  <!-- דף התרומה -->
   <iframe src="https://www.matara.pro/nedarimplus/online/?mosad=7010838" allowfullscreen></iframe>
 
   <footer>
     © כל הזכויות שמורות לעמותה
   </footer>
 
-  <!-- קריאת מספר מאזינים מקובץ חיצוני -->
+  <!-- טעינת מספר המאזינים מ-Render שלך -->
   <script>
-    fetch('/listeners.txt')
-      .then(res => res.text())
+    fetch('https://sms-h75u.onrender.com/listeners.txt')
+      .then(response => response.text())
       .then(data => {
         document.getElementById('listeners').innerText = data.trim();
       })
