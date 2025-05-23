@@ -5,12 +5,62 @@
   <title>תרומה לעמותה</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
-    body { font-family: Arial, sans-serif; background-color: #f5f5f5; text-align: center; margin: 0; padding: 0; }
-    header { background-color: #0073e6; color: white; padding: 20px; font-size: 26px; }
-    .hero-image { width: 100%; max-width: 700px; margin: 30px auto; display: block; }
-    .stats { background-color: #ffffff; margin: 20px auto; padding: 20px; max-width: 500px; box-shadow: 0 0 10px rgba(0,0,0,0.1); font-size: 20px; direction: rtl; }
-    iframe { width: 100%; max-width: 800px; height: 1000px; border: none; margin: 30px auto; display: block; }
-    footer { background-color: #eee; padding: 15px; font-size: 14px; margin-top: 40px; }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(to bottom right, #e0f7fa, #fff3e0);
+      text-align: center;
+      margin: 0;
+      padding: 0;
+    }
+    header {
+      background-color: #0073e6;
+      color: white;
+      padding: 20px;
+      font-size: 26px;
+    }
+    .hero-image {
+      width: 100%;
+      max-width: 700px;
+      margin: 30px auto;
+      display: block;
+    }
+    .stats {
+      background-color: #ffffff;
+      margin: 20px auto;
+      padding: 20px;
+      max-width: 500px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      font-size: 20px;
+      direction: rtl;
+    }
+    iframe {
+      width: 100%;
+      max-width: 800px;
+      height: 1000px;
+      border: none;
+      margin: 30px auto;
+      display: block;
+    }
+    .flyer {
+      margin: 40px auto;
+      max-width: 600px;
+      background-color: #ffffff;
+      padding: 20px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.15);
+    }
+    .upgrade-text {
+      font-size: 24px;
+      font-weight: bold;
+      font-family: 'Trebuchet MS', sans-serif;
+      margin-top: 40px;
+      color: #333;
+    }
+    footer {
+      background-color: #eee;
+      padding: 15px;
+      font-size: 14px;
+      margin-top: 40px;
+    }
   </style>
 </head>
 <body>
@@ -18,9 +68,14 @@
   <img src="your-image.jpg" alt="לוגו או כותרת גרפית" class="hero-image">
   <div class="stats">
     📞 מאזינים עכשיו: <span id="listeners">טוען...</span><br>
-    ⏱ דקות שיחה ב־24 שעות: <span id="minutes">טוען...</span>
+    ⏱ דקות שיחה ב‏24 שעות: <span id="minutes">טוען...</span>
   </div>
   <iframe src="https://www.matara.pro/nedarimplus/online/?mosad=7010838" allowfullscreen></iframe>
+  <div class="flyer">
+    <!-- כאן תוכל להכניס פלייר A5 כתמונה -->
+    <img src="your-flyer.jpg" alt="פלייר A5" style="width:100%; height:auto;">
+  </div>
+  <div class="upgrade-text">לקראת שדרוג</div>
   <footer>© כל הזכויות שמורות לעמותה</footer>
   <script>
     fetch('/listeners.txt').then(r => r.text()).then(t => document.getElementById("listeners").innerText = t.trim());
