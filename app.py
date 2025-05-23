@@ -1,8 +1,8 @@
-from flask import Flask, send_file
+from flask import Flask, send_file, send_from_directory
 import requests
 import os
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder='.', static_url_path='')
 
 USERNAME = "023011196"
 PASSWORD = "1234"
@@ -35,3 +35,7 @@ def get_listeners():
     if os.path.exists(OUTPUT_FILE):
         return send_file(OUTPUT_FILE)
     return "0"
+
+@app.route('/dashboard')
+def dashboard():
+    return send_from_directory('.', 'index.html')
