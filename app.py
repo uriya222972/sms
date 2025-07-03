@@ -1,65 +1,126 @@
-from flask import Flask, send_file, send_from_directory
+from flask import Flask, request, session, redirect, url_for, render_template_string, jsonify
 import requests
-import os
+import json
+import uuid
 
-app = Flask(__name__, static_folder='.', static_url_path='')
+app = Flask(__name__)
+app.secret_key = 'secretkey123'
 
-USERNAME = "023011196"
-PASSWORD = "1234"
-API_URL = "https://www.call2all.co.il/ym/api"
-LISTENERS_FILE = "listeners.txt"
-MINUTES_FILE = "minutes.txt"
+API_URL = "                                            "
+AUTH_HEADER = "Basic MjJ1cml5YTIyOjRkNTFjZGU5LTBkZmQtNGYwYi1iOTY4LWQ5MTA0NjdjZmM4MQ=="
+SENDER = "0001"
 
-from datetime import datetime, timedelta
-today = datetime.utcnow().date()
-yesterday = today - timedelta(days=1)
-from_date = yesterday.isoformat()
-to_date = today.isoformat()
+# בסיס נתונים פשוט בזיכרון
+users = {}  # username -> {"password": str, "contacts": list of dict, "codes": dict}
+sessions = {}  # session_id -> username
 
-def update_data():
-    token = f"{USERNAME}:{PASSWORD}"
+@app.route("/register", methods=["GET", "POST"])
+def register():
+    if request.method == "POST":
+        username = request.form['username']
+        password = request.form['password']
+        if username in users:
+            return "שם משתמש כבר קיים"
+        users[username] = {"password": password, "contacts": [], "codes": {}}
+        return redirect(url_for('login'))
+    return '''
+        <form method="post">
+            שם משתמש: <input name="username"><br>
+            סיסמה: <input name="password" type="password"><br>
+            <input type="submit" value="הרשם">
+        </form>
+    '''
 
-    # עדכון מספר מאזינים פעילים
-    try:
-        r = requests.get(f"{API_URL}/GetIncomingCalls?token={token}")
-        data = r.json()
-        if data.get("responseStatus") == "OK":
-            count = data.get("callsCount", 0)
-            with open(LISTENERS_FILE, "w") as f:
-                f.write(str(count))
-            print(f"✔ מספר מאזינים עודכן: {count}")
-        else:
-            print("❌ GetIncomingCalls:", data.get("message"))
-    except Exception as e:
-        print("❌ שגיאה ב־GetIncomingCalls:", e)
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    if request.method == "POST":
+        username = request.form['username']
+        password = request.form['password']
+        if username in users and users[username]['password'] == password:
+            session['username'] = username
+            return redirect(url_for('dashboard'))
+        return "פרטי התחברות שגויים"
+    return '''
+        <form method="post">
+            שם משתמש: <input name="username"><br>
+            סיסמה: <input name="password" type="password"><br>
+            <input type="submit" value="התחבר">
+        </form>
+    '''
 
-    # עדכון דקות שיחה
-    try:
-        r = requests.get(f"{API_URL}/GetIncomingSum?token={token}&fromDate={from_date}&toDate={to_date}")
-        data = r.json()
-        if data.get("responseStatus") == "OK":
-            minutes = data.get("totalMinutes", 0)
-            with open(MINUTES_FILE, "w") as f:
-                f.write(str(minutes))
-            print(f"✔ דקות שיחה עודכנו: {minutes}")
-        else:
-            print("❌ GetIncomingSum:", data.get("message"))
-    except Exception as e:
-        print("❌ שגיאה ב־GetIncomingSum:", e)
-
-@app.route('/')
-def home():
-    update_data()
-    return "OK"
-
-@app.route('/listeners.txt')
-def get_listeners():
-    return send_file(LISTENERS_FILE) if os.path.exists(LISTENERS_FILE) else "0"
-
-@app.route('/minutes.txt')
-def get_minutes():
-    return send_file(MINUTES_FILE) if os.path.exists(MINUTES_FILE) else "0"
-
-@app.route('/dashboard')
+@app.route("/dashboard", methods=["GET", "POST"])
 def dashboard():
-    return send_from_directory('.', 'index.html')
+    if 'username' not in session:
+        return redirect(url_for('login'))
+    username = session['username']
+    user = users[username]
+
+    if request.method == "POST":
+        phone = request.form['phone']
+        name = request.form.get('name', '')
+        notes = request.form.get('notes', '')
+        user['contacts'].append({"phone": phone, "name": name, "notes": notes, "status": None})
+
+    contact_list = "<ul>" + "".join([
+        f"<li>{c['phone']} - {c.get('name', '')} - {c.get('notes', '')} - {c['status']}</li>"
+        for c in user['contacts']
+    ]) + "</ul>"
+
+    return f'''
+        <h1>ברוך הבא, {username}</h1>
+        <form method="post">
+            מספר טלפון: <input name="phone"><br>
+            שם איש קשר: <input name="name"><br>
+            הערות: <input name="notes"><br>
+            <input type="submit" value="הוסף איש קשר">
+        </form>
+        <h2>רשימת אנשי קשר:</h2>
+        {contact_list}
+    '''
+
+@app.route("/api/send_next", methods=["POST"])
+def send_next():
+    data = request.json
+    username = data.get("username")
+    password = data.get("password")
+    if username not in users or users[username]['password'] != password:
+        return jsonify({"error": "גישה נדחתה"})
+
+    for contact in users[username]['contacts']:
+        if contact['status'] is None:
+            message = f"התקשר ל: {contact['phone']}\nשם: {contact.get('name', '')}\nהערות: {contact.get('notes', '')}"
+            sms_data = {
+                "Sender": SENDER,
+                "Message": message,
+                "Recipients": [{"Phone": data.get("to_phone")}]
+            }
+            headers = {
+                "Content-Type": "application/json; charset=utf-8",
+                "Authorization": AUTH_HEADER
+            }
+            try:
+                requests.post(API_URL, headers=headers, json=sms_data)
+                return jsonify({"status": "נשלח", "details": contact})
+            except Exception as e:
+                return jsonify({"error": str(e)})
+    return jsonify({"status": "אין אנשי קשר פנויים"})
+
+@app.route("/api/response", methods=["POST"])
+def receive_response():
+    data = request.json
+    username = data.get("username")
+    password = data.get("password")
+    digit = data.get("digit")
+
+    if username not in users or users[username]['password'] != password:
+        return jsonify({"error": "גישה נדחתה"})
+
+    for contact in users[username]['contacts']:
+        if contact['status'] is None:
+            contact['status'] = digit
+            return jsonify({"status": "עודכן", "contact": contact})
+
+    return jsonify({"status": "לא נמצא איש קשר לעדכון"})
+
+if __name__ == "__main__":
+    app.run(debug=True)
