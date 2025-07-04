@@ -14,6 +14,13 @@ SENDER = "0001"
 users = {}  # username -> {"password": str, "contacts": list of dict, "codes": dict}
 sessions = {}  # session_id -> username
 
+@app.route("/")
+def home():
+    return '''
+        <h1>מערכת CRM לטלפנים</h1>
+        <a href="/register">הרשמה</a> | <a href="/login">התחברות</a>
+    '''
+
 @app.route("/register", methods=["GET", "POST"])
 def register():
     if request.method == "POST":
